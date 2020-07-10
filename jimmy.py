@@ -4,6 +4,7 @@ from pyglet.window import mouse
 from pyglet import resource
 from pyglet import sprite
 from pyglet.gl import gl
+from pyglet import clock
 
 # Resource-related
 resource.path = ['./resources']
@@ -31,12 +32,6 @@ icon32 = None
 def center_image(image):
     image.anchor_x = image.width / 2
     image.anchor_y = image.height / 2
-
-
-def center_image_list(image):
-    for img in image:
-        img.anchor_x = image.width / 2
-        img.anchor_y = image.height / 2
 
 
 # GL stuff
@@ -99,26 +94,40 @@ class Region(object):
 
 # Gameplay stuff
 class Player():
-    def __init__(self):
-        pass
 
-        self.x = 0
-        self.y = 0
+    images = [
+        resource.image('player.png'),
+        resource.image('player.png'),
+        resource.image('player.png'),
+        resource.image('player.png')
+    ]
+
+    def __init__(self):
+        for img in self.images:
+            img.anchor_x = img.width / 2
+            img.anchor_y = img.height / 2
+
+        self.x = 400
+        self.y = 300
         self.vx = 0
         self.vy = 0
         self.direction = 1
+        self.jimmy = sprite.Sprite(self.images[0])
 
     def draw(self):
-        pass
+        self.jimmy.draw()
 
     def update(self, dt):
         self.x = self.x + self.vx * dt
         self.y = self.y + self.vy * dt  # It's physics time :P
+        self.jimmy.x = self.x
+        self.jimmy.y = self.y
 
     def change_direction(self, direction, vx, vy):
         self.direction = direction
         self.vx = vx
         self.vy = vy
+        self.jimmy.image = self.images[self.direction]
 
 
 class Engine():
@@ -173,6 +182,7 @@ class Bedroom(Screen):
 
     def draw(self):
         self.floor.draw()
+        player.draw()
 
     def on_click(self, x, y, button):
         pass
@@ -181,7 +191,53 @@ class Bedroom(Screen):
         pass
 
     def update(self, dt):
-        pass
+
+        # PLAYER MOVEMENT
+
+        # Normal movement
+        if keys[key.W]:
+            player.change_direction(0, 0, 170)
+
+        if keys[key.A]:
+            player.change_direction(3, -170, 0)
+
+        if keys[key.S]:
+            player.change_direction(2, 0, -170)
+
+        if keys[key.D]:
+            player.change_direction(1, 170, 0)
+
+        # Diagonal implementation
+        if keys[key.W] and keys[key.A]:
+            player.change_direction(3, -160, 160)
+
+        if keys[key.W] and keys[key.D]:
+            player.change_direction(1, 160, 160)
+
+        if keys[key.S] and keys[key.A]:
+            player.change_direction(3, -160, -160)
+        
+        if keys[key.S] and keys[key.D]:
+            player.change_direction(1, 160, -160)
+
+        # Cancel two keys at the same time
+        if keys[key.W] and keys[key.S]:
+            player.change_direction(player.direction, 0, 0)
+
+        if keys[key.A] and keys[key.D]:
+            player.change_direction(player.direction, 0, 0)
+
+        if not self.is_key_pressed():
+            player.change_direction(player.direction, 0, 0)
+
+        # ~~~~~~~~~~~~~~
+
+    def is_key_pressed(self):
+        for _k, v in keys.items():
+            if v:
+                return True
+        
+        return False
 
 
 # ~~~~~~~~~
@@ -190,6 +246,7 @@ class Bedroom(Screen):
 # Instances of classes
 # Screens go first
 bedroom = Bedroom()
+player = Player()
 engine = Engine(bedroom)
 
 
@@ -200,8 +257,8 @@ def on_draw():
 
 
 @window.event
-def on_mouse_press(x, y, button):
-    if button == mouse.LEFT:
+def on_mouse_press(x, y, button, modifiers):
+    if button & mouse.LEFT:
         engine.on_click(x, y, button)
 
 
@@ -219,6 +276,11 @@ def on_key_press(symbol, modifiers):
 @window.event
 def update(dt):
     engine.update(dt)
+    player.update(dt)
 
 
+keys = key.KeyStateHandler()
+window.push_handlers(keys)
+
+clock.schedule_interval(update, 1/30)
 pyglet.app.run()
