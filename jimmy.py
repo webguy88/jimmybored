@@ -138,6 +138,7 @@ class Player():
         self.jimmy_idle = sprite.Sprite(self.images_idle[0])
         self.jimmy_walk_r = sprite.Sprite(self.jimmy_right)
         self.jimmy_walk_l = sprite.Sprite(self.jimmy_left)
+        self.player_hitbox = Region(self.x, self.y, 40, 70)
 
     def draw(self):
         if not self.walking:
@@ -157,6 +158,10 @@ class Player():
         self.jimmy_walk_r.y = self.jimmy_idle.y
         self.jimmy_walk_l.x = self.jimmy_idle.x
         self.jimmy_walk_l.y = self.jimmy_idle.y
+
+        # Update region
+        self.player_hitbox.x = (self.jimmy_idle.x - 20)
+        self.player_hitbox.y = (self.jimmy_idle.y - 35)
 
     def change_direction(self, direction, vx, vy):
         self.direction = direction
@@ -220,6 +225,9 @@ class Bedroom(Screen):
         self.floor.draw()
         player.draw()
         self.effect.draw()
+
+        # Debugging
+        ...
 
     def on_click(self, x, y, button):
         pass
@@ -296,8 +304,8 @@ class Bedroom(Screen):
 
 # Instances of classes
 # Screens go first
-bedroom = Bedroom()
 player = Player()
+bedroom = Bedroom()
 engine = Engine(bedroom)
 
 
