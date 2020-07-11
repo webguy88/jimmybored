@@ -14,6 +14,7 @@ pyglet.options['debug_gl'] = False
 
 room_floor = resource.image('bg.png')
 dark_effect = resource.image('effect.png')
+icon = resource.image('icon.png')
 
 # Window stuff
 SCREENW = 640
@@ -36,6 +37,7 @@ def center_image(image):
     image.anchor_x = image.width / 2
     image.anchor_y = image.height / 2
 
+center_image(icon)
 
 # GL stuff
 gl.glEnable(gl.GL_BLEND)
@@ -153,36 +155,55 @@ class Player():
         self.jimmy_walk_r = sprite.Sprite(self.jimmy_right)
         self.jimmy_walk_l = sprite.Sprite(self.jimmy_left)
         self.jimmy_sprite = self.jimmy_walk_r
-        self.player_hitbox = Region(self.x, self.y, 40, 70)
+        self.hitbox = Region(self.x, self.y, 40, 70)
 
     def draw(self):
         self.jimmy_sprite.draw()
 
-    def update(self, dt):
-        self.x = self.x + self.vx * dt
-        self.y = self.y + self.vy * dt  # It's physics time :P
-        self.jimmy_idle.x = self.x
-        self.jimmy_idle.y = self.y
-        self.jimmy_walk_r.x = self.jimmy_idle.x
-        self.jimmy_walk_r.y = self.jimmy_idle.y
-        self.jimmy_walk_l.x = self.jimmy_idle.x
-        self.jimmy_walk_l.y = self.jimmy_idle.y
+    def detect_collision(self, hitbox):
+        # Check if there's no collision between objects
+        for obj in engine.current_screen.obj_list:
+            if hitbox.collides(obj.hitbox):
+                return obj
 
-        # Update region
-        self.player_hitbox.x = (self.jimmy_idle.x - 20)
-        self.player_hitbox.y = (self.jimmy_idle.y - 35)
+    def update(self, dt):
+        new_x = self.x + self.vx * dt
+        new_y = self.y + self.vy * dt
+        new_hitbox = Region(new_x - 40 // 2,
+                            new_y - 70 // 2,
+                            width=40,
+                            height=70)
+        obj_hit = self.detect_collision(new_hitbox)
+
+        if obj_hit != None:
+            self.vx = 0
+            self.vy = 0
+            self.jimmy_sprite = self.jimmy_idle
+            self.jimmy_sprite.x = self.x
+            self.jimmy_sprite.y = self.y
+            return
 
         # Calculate Jimmy sprite
         if not self.walking:
             self.jimmy_sprite = self.jimmy_idle
-        
+
         if self.walking and self.direction == 0:
             self.jimmy_sprite = self.jimmy_walk_r
 
         elif self.walking and self.direction == 1:
             self.jimmy_sprite = self.jimmy_walk_l
 
+        self.x = new_x
+        self.y = new_y  # It's physics time :P
+        self.jimmy_sprite.x = self.x
+        self.jimmy_sprite.y = self.y
+
+        # Update region
+        self.hitbox = new_hitbox
+
     def change_direction(self, direction, vx, vy):
+
+        # Update player state
         self.direction = direction
         self.vx = vx
         self.vy = vy
@@ -232,21 +253,39 @@ class Screen():
         pass
 
 
+class SceneObject():
+    def __init__(self, id, solid, name, sprite, x, y):
+        self.id = id
+        self.solid = solid
+        self.name = name
+        self.sprite = sprite
+        self.x = x
+        self.y = y
+        self.sprite.x = self.x
+        self.sprite.y = self.y
+        self.hitbox = Region(self.x - self.sprite.width // 2, self.y - self.sprite.height // 2, self.sprite.width, self.sprite.height)
+
+
 class Bedroom(Screen):
 
     floor = sprite.Sprite(room_floor, x=0, y=0)
     effect = sprite.Sprite(dark_effect, x=0, y=0)
+    image_test = sprite.Sprite(icon, x=0, y=0)
 
     def __init__(self):
         self.collide_test = Region(100, 100, 100, 100)
+        self.obj_list = []
 
     def draw(self):
         self.floor.draw()
         player.draw()
         self.effect.draw()
+        
+        for obj in self.obj_list:
+            obj.sprite.draw()
 
         # Debugging
-        self.collide_test.draw()
+        ...
 
     def on_click(self, x, y, button):
         pass
@@ -306,8 +345,7 @@ class Bedroom(Screen):
             player.walking = False
 
         # Collision
-        if self.collide_test.collides(player.player_hitbox):
-            pass
+        ...
 
         # ~~~~~~~~~~~~~~
 
@@ -325,7 +363,9 @@ class Bedroom(Screen):
 # Instances of classes
 # Screens go first
 player = Player()
+bed = SceneObject(id=1, solid=True, name="bed", sprite=Bedroom.image_test, x=100, y=100)
 bedroom = Bedroom()
+bedroom.obj_list.append(bed)
 engine = Engine(bedroom)
 
 
