@@ -12,10 +12,11 @@ resource.reindex()
 pyglet.options['debug_gl'] = False
 
 room_floor = resource.image('bg.png')
+dark_effect = resource.image('effect.png')
 
 # Window stuff
-SCREENW = 800
-SCREENH = 600
+SCREENW = 640
+SCREENH = 480
 FULLSCREEN = False
 
 window = pyglet.window.Window(SCREENW, SCREENH, caption="Jimmy is bored",
@@ -95,39 +96,73 @@ class Region(object):
 # Gameplay stuff
 class Player():
 
-    images = [
-        resource.image('player.png'),
-        resource.image('player.png'),
-        resource.image('player.png'),
-        resource.image('player.png')
+    images_idle = [
+        resource.image('playerR.png'),
+        resource.image('playerL.png')
     ]
 
+    images_walking_r = [
+        resource.image('playerR_walk1.png'),
+        resource.image('playerR.png'),
+        resource.image('playerR_walk2.png')
+    ]
+
+    images_walking_l = [
+        resource.image('playerL_walk1.png'),
+        resource.image('playerL.png'),
+        resource.image('playerL_walk2.png')
+    ]
+
+    jimmy_right = pyglet.image.Animation.from_image_sequence(images_walking_r, duration=0.1, loop=True)
+    jimmy_left = pyglet.image.Animation.from_image_sequence(images_walking_l, duration=0.1, loop=True)
+
     def __init__(self):
-        for img in self.images:
+        for img in self.images_idle:
             img.anchor_x = img.width / 2
             img.anchor_y = img.height / 2
 
-        self.x = 400
-        self.y = 300
+        for img in self.images_walking_r:
+            img.anchor_x = img.width / 2
+            img.anchor_y = img.width / 2
+
+        for img in self.images_walking_l:
+            img.anchor_x = img.width / 2
+            img.anchor_y = img.width / 2
+
+        self.x = 320
+        self.y = 240
         self.vx = 0
         self.vy = 0
         self.direction = 1
-        self.jimmy = sprite.Sprite(self.images[0])
+        self.walking = False
+        self.jimmy_idle = sprite.Sprite(self.images_idle[0])
+        self.jimmy_walk_r = sprite.Sprite(self.jimmy_right)
+        self.jimmy_walk_l = sprite.Sprite(self.jimmy_left)
 
     def draw(self):
-        self.jimmy.draw()
+        if not self.walking:
+            self.jimmy_idle.draw()
+        
+        if self.walking and self.direction == 0:
+            self.jimmy_walk_r.draw()
+        elif self.walking and self.direction == 1:
+            self.jimmy_walk_l.draw()
 
     def update(self, dt):
         self.x = self.x + self.vx * dt
         self.y = self.y + self.vy * dt  # It's physics time :P
-        self.jimmy.x = self.x
-        self.jimmy.y = self.y
+        self.jimmy_idle.x = self.x
+        self.jimmy_idle.y = self.y
+        self.jimmy_walk_r.x = self.jimmy_idle.x
+        self.jimmy_walk_r.y = self.jimmy_idle.y
+        self.jimmy_walk_l.x = self.jimmy_idle.x
+        self.jimmy_walk_l.y = self.jimmy_idle.y
 
     def change_direction(self, direction, vx, vy):
         self.direction = direction
         self.vx = vx
         self.vy = vy
-        self.jimmy.image = self.images[self.direction]
+        self.jimmy_idle.image = self.images_idle[self.direction]
 
 
 class Engine():
@@ -176,6 +211,7 @@ class Screen():
 class Bedroom(Screen):
 
     floor = sprite.Sprite(room_floor, x=0, y=0)
+    effect = sprite.Sprite(dark_effect, x=0, y=0)
 
     def __init__(self):
         pass
@@ -183,6 +219,7 @@ class Bedroom(Screen):
     def draw(self):
         self.floor.draw()
         player.draw()
+        self.effect.draw()
 
     def on_click(self, x, y, button):
         pass
@@ -192,43 +229,57 @@ class Bedroom(Screen):
 
     def update(self, dt):
 
-        # PLAYER MOVEMENT
+        # PLAYER MOVEMENT & BEHAVIOUR
 
         # Normal movement
         if keys[key.W]:
             player.change_direction(0, 0, 170)
+            player.walking = True
 
         if keys[key.A]:
-            player.change_direction(3, -170, 0)
+            player.change_direction(1, -170, 0)
+            player.walking = True
 
         if keys[key.S]:
-            player.change_direction(2, 0, -170)
+            player.change_direction(1, 0, -170)
+            player.walking = True
 
         if keys[key.D]:
-            player.change_direction(1, 170, 0)
+            player.change_direction(0, 170, 0)
+            player.walking = True
 
         # Diagonal implementation
         if keys[key.W] and keys[key.A]:
-            player.change_direction(3, -160, 160)
+            player.change_direction(1, -160, 160)
+            player.walking = True
 
         if keys[key.W] and keys[key.D]:
-            player.change_direction(1, 160, 160)
+            player.change_direction(0, 160, 160)
+            player.walking = True
 
         if keys[key.S] and keys[key.A]:
-            player.change_direction(3, -160, -160)
+            player.change_direction(1, -160, -160)
+            player.walking = True
         
         if keys[key.S] and keys[key.D]:
-            player.change_direction(1, 160, -160)
+            player.change_direction(0, 160, -160)
+            player.walking = True
 
         # Cancel two keys at the same time
         if keys[key.W] and keys[key.S]:
             player.change_direction(player.direction, 0, 0)
+            player.walking = False
 
         if keys[key.A] and keys[key.D]:
             player.change_direction(player.direction, 0, 0)
+            player.walking = False
 
         if not self.is_key_pressed():
             player.change_direction(player.direction, 0, 0)
+            player.walking = False
+
+        # Collision
+        ...
 
         # ~~~~~~~~~~~~~~
 
