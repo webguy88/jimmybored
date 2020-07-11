@@ -5,6 +5,7 @@ from pyglet import resource
 from pyglet import sprite
 from pyglet.gl import gl
 from pyglet import clock
+from math import sqrt
 
 # Resource-related
 resource.path = ['./resources']
@@ -25,8 +26,9 @@ window = pyglet.window.Window(SCREENW, SCREENH, caption="Jimmy is bored",
 default_cur = window.get_system_mouse_cursor(window.CURSOR_DEFAULT)
 choose_cur = window.get_system_mouse_cursor(window.CURSOR_HAND)
 
-icon16 = None
-icon32 = None
+icon16 = resource.image('icon16.png')
+icon32 = resource.image('icon32.png')
+window.set_icon(icon16, icon32)
 
 # ~~~~~~
 
@@ -89,6 +91,18 @@ class Region(object):
     def draw(self):
         r = Rect(self.x, self.y, self.width, self.height)
         r.draw()
+
+    def collides(self, r2):
+
+        # Check the edge collision
+        if self.x < r2.x + r2.width and \
+           self.x + self.width > r2.x and \
+           self.y < r2.y + r2.height and \
+           self.height + self.y > r2.y:
+            return True
+        
+        # If not in the edge collision
+        return False
 
 
 # ~~~~~~~~~~~~~~~~~
@@ -224,7 +238,7 @@ class Bedroom(Screen):
     effect = sprite.Sprite(dark_effect, x=0, y=0)
 
     def __init__(self):
-        pass
+        self.collide_test = Region(100, 100, 100, 100)
 
     def draw(self):
         self.floor.draw()
@@ -232,7 +246,7 @@ class Bedroom(Screen):
         self.effect.draw()
 
         # Debugging
-        ...
+        self.collide_test.draw()
 
     def on_click(self, x, y, button):
         pass
@@ -292,7 +306,8 @@ class Bedroom(Screen):
             player.walking = False
 
         # Collision
-        ...
+        if self.collide_test.collides(player.player_hitbox):
+            pass
 
         # ~~~~~~~~~~~~~~
 
