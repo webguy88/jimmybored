@@ -138,16 +138,11 @@ class Player():
         self.jimmy_idle = sprite.Sprite(self.images_idle[0])
         self.jimmy_walk_r = sprite.Sprite(self.jimmy_right)
         self.jimmy_walk_l = sprite.Sprite(self.jimmy_left)
+        self.jimmy_sprite = self.jimmy_walk_r
         self.player_hitbox = Region(self.x, self.y, 40, 70)
 
     def draw(self):
-        if not self.walking:
-            self.jimmy_idle.draw()
-        
-        if self.walking and self.direction == 0:
-            self.jimmy_walk_r.draw()
-        elif self.walking and self.direction == 1:
-            self.jimmy_walk_l.draw()
+        self.jimmy_sprite.draw()
 
     def update(self, dt):
         self.x = self.x + self.vx * dt
@@ -162,6 +157,16 @@ class Player():
         # Update region
         self.player_hitbox.x = (self.jimmy_idle.x - 20)
         self.player_hitbox.y = (self.jimmy_idle.y - 35)
+
+        # Calculate Jimmy sprite
+        if not self.walking:
+            self.jimmy_sprite = self.jimmy_idle
+        
+        if self.walking and self.direction == 0:
+            self.jimmy_sprite = self.jimmy_walk_r
+
+        elif self.walking and self.direction == 1:
+            self.jimmy_sprite = self.jimmy_walk_l
 
     def change_direction(self, direction, vx, vy):
         self.direction = direction
