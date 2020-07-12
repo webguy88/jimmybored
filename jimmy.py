@@ -45,6 +45,7 @@ center_image(bed_img)
 center_image(wall_img)
 center_image(bass_body)
 center_image(bass_neck)
+center_image(bass_outline)
 
 
 # GL stuff
@@ -164,6 +165,7 @@ class Player():
         self.jimmy_walk_l = sprite.Sprite(self.jimmy_left)
         self.jimmy_sprite = self.jimmy_walk_r
         self.hitbox = Region(self.x, self.y, 40, 70)
+        self.is_over_bass = False
 
     def draw(self):
         self.jimmy_sprite.draw()
@@ -171,7 +173,7 @@ class Player():
     def detect_collision(self, hitbox):
         # Check if there's no collision between objects
         for obj in engine.current_screen.obj_list:
-            if hitbox.collides(obj.hitbox):
+            if obj.solid and hitbox.collides(obj.hitbox):
                 return obj
 
     def update(self, dt):
@@ -262,7 +264,7 @@ class Screen():
 
 
 class SceneObject():
-    def __init__(self, id, solid, name, x, y, width=0, height=0, sprite=None):
+    def __init__(self, id, solid, name, x, y, width=0, height=0, sprite=None, visible=True):
         self.id = id
         self.solid = solid
         self.name = name
@@ -271,18 +273,21 @@ class SceneObject():
         self.y = y
         self.width = width
         self.height = height
+        self.visible = visible
 
         if sprite != None:
             self.sprite.x = self.x
             self.sprite.y = self.y
+
+        if sprite != None and width == 0 and height == 0:
             self.hitbox = Region(self.x - self.sprite.width // 2,
                                  self.y - self.sprite.height // 2,
                                  self.sprite.width,
                                  self.sprite.height)
 
         else:
-            self.hitbox = Region(self.x,
-                                 self.y,
+            self.hitbox = Region(self.x - self.width // 2,
+                                 self.y - self.height // 2,
                                  self.width,
                                  self.height)
 
@@ -295,23 +300,27 @@ class Bedroom(Screen):
     wall_spr = sprite.Sprite(wall_img, x=0, y=0)
     b_body_spr = sprite.Sprite(bass_body, x=0, y=0)
     b_neck_spr = sprite.Sprite(bass_neck, x=260, y=322)
+    b_outline = sprite.Sprite(bass_outline, x=0, y=0)
 
     def __init__(self):
-        self.collide_test = Region(100, 100, 100, 100)
         self.obj_list = []
+
+        # Interaction regions
+        self.bass_region = Region(202, 185, 116, 154)
 
     def draw(self):
         self.floor.draw()
-        
+
         for obj in self.obj_list:
-            if obj.sprite != None:
+            if obj.sprite != None and obj.visible:
+                #print(obj.id)
                 obj.sprite.draw()
 
         player.draw()
         self.b_neck_spr.draw()
         self.effect.draw()
         # Debugging
-        #player.hitbox.draw()
+        #self.bass_region.draw()
 
     def on_click(self, x, y, button):
         pass
@@ -370,8 +379,14 @@ class Bedroom(Screen):
             player.change_direction(player.direction, 0, 0)
             player.walking = False
 
-        # Collision
-        ...
+        # Outlining
+        if player.hitbox.collides(outline_bass.hitbox):
+            outline_bass.visible = True
+            player.is_over_bass = True
+        else:
+            outline_bass.visible = False
+            player.is_over_bass = False
+            
 
         # ~~~~~~~~~~~~~~
 
@@ -391,10 +406,11 @@ class Bedroom(Screen):
 player = Player()
 wall = SceneObject(id=0, solid=True, name="wall", x=320, y=372, sprite=Bedroom.wall_spr)
 bed = SceneObject(id=1, solid=True, name="bed", x=80, y=240, sprite=Bedroom.bed_spr)
-boundary_down = SceneObject(id=2, solid=True, name="b_bottom", x=0, y=0, width=SCREENW, height=1)
+boundary_down = SceneObject(id=2, solid=True, name="b_bottom", x=320, y=0, width=SCREENW, height=1)
 boundary_left = SceneObject(id=3, solid=True, name="b_left", x=0, y=0, width=1, height=SCREENH)
 boundary_right = SceneObject(id=4, solid=True, name="b_right", x=639, y=0, width=1, height=SCREENH)
 body_bass = SceneObject(id=5, solid=True, name="bass_body", x=260, y=235, sprite=Bedroom.b_body_spr)
+outline_bass = SceneObject(id=6, solid=False, name="bass_outline", x=260, y=285, width=87, height=205, sprite=Bedroom.b_outline, visible=False)
 bedroom = Bedroom()
 
 # Add all the scene objects
@@ -403,6 +419,7 @@ bedroom.obj_list.append(bed)
 bedroom.obj_list.append(boundary_down)
 bedroom.obj_list.append(boundary_left)
 bedroom.obj_list.append(boundary_right)
+bedroom.obj_list.append(outline_bass)
 bedroom.obj_list.append(body_bass)
 engine = Engine(bedroom)
 
