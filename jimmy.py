@@ -5,6 +5,8 @@ from pyglet import resource
 from pyglet import sprite
 from pyglet.gl import gl
 from pyglet import clock
+from pyglet import text
+from random import randint
 
 # Resource-related
 resource.path = ['./resources']
@@ -18,6 +20,37 @@ wall_img = resource.image('wall.png')
 bass_body = resource.image('bass.png')
 bass_neck = resource.image('bass_neck.png')
 bass_outline = resource.image('bass_outline.png')
+
+low_E = resource.media('bass_low_E.wav', streaming=False)
+low_F = resource.media('bass_low_F.wav', streaming=False)
+low_G = resource.media('bass_low_G.wav', streaming=False)
+low_A = resource.media('bass_low_A.wav', streaming=False)
+low_B = resource.media('bass_low_B.wav', streaming=False)
+low_C = resource.media('bass_low_C.wav', streaming=False)
+low_D = resource.media('bass_low_D.wav', streaming=False)
+high_E = resource.media('bass_high_E.wav', streaming=False)
+high_F = resource.media('bass_high_F.wav', streaming=False)
+high_G = resource.media('bass_high_G.wav', streaming=False)
+high_A = resource.media('bass_high_A.wav', streaming=False)
+high_B = resource.media('bass_high_B.wav', streaming=False)
+high_C = resource.media('bass_high_C.wav', streaming=False)
+
+
+bass_notes = [
+    low_E,
+    low_F,
+    low_G,
+    low_A,
+    low_B,
+    low_C,
+    low_D,
+    high_E,
+    high_F,
+    high_G,
+    high_A,
+    high_B,
+    high_C,
+]
 
 # Window stuff
 SCREENW = 640
@@ -47,6 +80,8 @@ center_image(bass_body)
 center_image(bass_neck)
 center_image(bass_outline)
 
+GAME = "game"
+MSG = "message"
 
 # GL stuff
 gl.glEnable(gl.GL_BLEND)
@@ -304,9 +339,10 @@ class Bedroom(Screen):
 
     def __init__(self):
         self.obj_list = []
+        self.layer = GAME
 
-        # Interaction regions
-        self.bass_region = Region(202, 185, 116, 154)
+        # Texts
+        ...
 
     def draw(self):
         self.floor.draw()
@@ -319,73 +355,77 @@ class Bedroom(Screen):
         player.draw()
         self.b_neck_spr.draw()
         self.effect.draw()
+
         # Debugging
-        #self.bass_region.draw()
+        ...
 
     def on_click(self, x, y, button):
         pass
 
     def on_key_press(self, symbol, modifiers):
-        pass
+        if player.is_over_bass and symbol == key.SPACE:
+            bass_notes[randint(0, 12)].play()
 
     def update(self, dt):
 
         # PLAYER MOVEMENT & BEHAVIOUR
 
-        # Normal movement
-        if keys[key.W]:
-            player.change_direction(0, 0, 170)
-            player.walking = True
+        if self.layer == GAME:
 
-        if keys[key.A]:
-            player.change_direction(1, -170, 0)
-            player.walking = True
+            # Normal movement
+            if keys[key.W]:
+                player.change_direction(0, 0, 170)
+                player.walking = True
 
-        if keys[key.S]:
-            player.change_direction(1, 0, -170)
-            player.walking = True
+            if keys[key.A]:
+                player.change_direction(1, -170, 0)
+                player.walking = True
 
-        if keys[key.D]:
-            player.change_direction(0, 170, 0)
-            player.walking = True
+            if keys[key.S]:
+                player.change_direction(1, 0, -170)
+                player.walking = True
 
-        # Diagonal implementation
-        if keys[key.W] and keys[key.A]:
-            player.change_direction(1, -160, 160)
-            player.walking = True
+            if keys[key.D]:
+                player.change_direction(0, 170, 0)
+                player.walking = True
 
-        if keys[key.W] and keys[key.D]:
-            player.change_direction(0, 160, 160)
-            player.walking = True
+            # Diagonal implementation
+            if keys[key.W] and keys[key.A]:
+                player.change_direction(1, -160, 160)
+                player.walking = True
 
-        if keys[key.S] and keys[key.A]:
-            player.change_direction(1, -160, -160)
-            player.walking = True
-        
-        if keys[key.S] and keys[key.D]:
-            player.change_direction(0, 160, -160)
-            player.walking = True
+            if keys[key.W] and keys[key.D]:
+                player.change_direction(0, 160, 160)
+                player.walking = True
 
-        # Cancel two keys at the same time
-        if keys[key.W] and keys[key.S]:
-            player.change_direction(player.direction, 0, 0)
-            player.walking = False
+            if keys[key.S] and keys[key.A]:
+                player.change_direction(1, -160, -160)
+                player.walking = True
+            
+            if keys[key.S] and keys[key.D]:
+                player.change_direction(0, 160, -160)
+                player.walking = True
 
-        if keys[key.A] and keys[key.D]:
-            player.change_direction(player.direction, 0, 0)
-            player.walking = False
+            # Cancel two keys at the same time
+            if keys[key.W] and keys[key.S]:
+                player.change_direction(player.direction, 0, 0)
+                player.walking = False
 
-        if not self.is_key_pressed():
-            player.change_direction(player.direction, 0, 0)
-            player.walking = False
+            if keys[key.A] and keys[key.D]:
+                player.change_direction(player.direction, 0, 0)
+                player.walking = False
 
-        # Outlining
-        if player.hitbox.collides(outline_bass.hitbox):
-            outline_bass.visible = True
-            player.is_over_bass = True
-        else:
-            outline_bass.visible = False
-            player.is_over_bass = False
+            if not self.is_key_pressed():
+                player.change_direction(player.direction, 0, 0)
+                player.walking = False
+
+            # Outlining
+            if player.hitbox.collides(outline_bass.hitbox):
+                outline_bass.visible = True
+                player.is_over_bass = True
+            else:
+                outline_bass.visible = False
+                player.is_over_bass = False
             
 
         # ~~~~~~~~~~~~~~
