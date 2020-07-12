@@ -20,6 +20,10 @@ wall_img = resource.image('wall.png')
 bass_body = resource.image('bass.png')
 bass_neck = resource.image('bass_neck.png')
 bass_outline = resource.image('bass_outline.png')
+bed_outline = resource.image('bed_outline.png')
+message_show = resource.image('message_show.png')
+popup_button_U = resource.image('popup_button_U.png')
+popup_button_S = resource.image('popup_button_S.png')
 
 low_E = resource.media('bass_low_E.wav', streaming=False)
 low_F = resource.media('bass_low_F.wav', streaming=False)
@@ -79,6 +83,9 @@ center_image(wall_img)
 center_image(bass_body)
 center_image(bass_neck)
 center_image(bass_outline)
+center_image(bed_outline)
+center_image(popup_button_U)
+center_image(popup_button_S)
 
 GAME = "game"
 MSG = "message"
@@ -201,6 +208,7 @@ class Player():
         self.jimmy_sprite = self.jimmy_walk_r
         self.hitbox = Region(self.x, self.y, 40, 70)
         self.is_over_bass = False
+        self.is_over_bed = False
 
     def draw(self):
         self.jimmy_sprite.draw()
@@ -275,6 +283,7 @@ class Engine():
         self.current_screen.on_key_press(symbol, modifiers)
 
     def update(self, dt):
+        window.set_mouse_cursor(default_cur)
         self.current_screen.update(dt)
 
     def set_current_screen(self, current_screen):
@@ -336,35 +345,67 @@ class Bedroom(Screen):
     b_body_spr = sprite.Sprite(bass_body, x=0, y=0)
     b_neck_spr = sprite.Sprite(bass_neck, x=260, y=322)
     b_outline = sprite.Sprite(bass_outline, x=0, y=0)
+    bd_outline = sprite.Sprite(bed_outline, x=0, y=0)
+    popup = sprite.Sprite(message_show, x=0, y=0)
+    popup_button_un = sprite.Sprite(popup_button_U, x=320, y=100)
+    popup_button_se = sprite.Sprite(popup_button_S, x=320, y=100)
 
     def __init__(self):
         self.obj_list = []
         self.layer = GAME
+        self.mouse_over_button = False
+        self.popup_button_region = Region(self.popup_button_un.x - self.popup_button_un.width // 2,
+                                          self.popup_button_un.y - self.popup_button_un.height // 2,
+                                          234, 84)
 
         # Texts
-        ...
+        self.bed_text = text.Label(
+            """
+                   That bed looks comfy, 
+            but you don't feel like sleeping
+            """
+                                   , x=280, y=160,
+                                   anchor_x='center', anchor_y='center',
+                                   font_size=24, color=(255, 255, 255, 255),
+                                   multiline=True, width=562, height=357)
+        self.message = None
 
     def draw(self):
         self.floor.draw()
 
         for obj in self.obj_list:
             if obj.sprite != None and obj.visible:
-                #print(obj.id)
                 obj.sprite.draw()
 
         player.draw()
         self.b_neck_spr.draw()
         self.effect.draw()
 
+        if self.layer == MSG:
+            self.popup.draw()
+            self.message.draw()
+            if self.mouse_over_button:
+                self.popup_button_se.draw()
+            else:
+                self.popup_button_un.draw()
+
         # Debugging
         ...
 
     def on_click(self, x, y, button):
-        pass
+        if self.layer == MSG:
+            
+            if self.popup_button_region.contain(x, y):
+                self.layer = GAME
 
     def on_key_press(self, symbol, modifiers):
-        if player.is_over_bass and symbol == key.SPACE:
-            bass_notes[randint(0, 12)].play()
+        if self.layer == GAME:
+            if player.is_over_bass and symbol == key.SPACE:
+                bass_notes[randint(0, 12)].play()
+
+            if player.is_over_bed and symbol == key.SPACE:
+                self.layer = MSG
+                self.message = self.bed_text
 
     def update(self, dt):
 
@@ -426,9 +467,24 @@ class Bedroom(Screen):
             else:
                 outline_bass.visible = False
                 player.is_over_bass = False
-            
 
+            if player.hitbox.collides(outline_bed.hitbox):
+                outline_bed.visible = True
+                player.is_over_bed = True
+            else:
+                outline_bed.visible = False
+                player.is_over_bed = False
+            
         # ~~~~~~~~~~~~~~
+
+        # POPUPS RELATED
+        elif self.layer == MSG:
+    
+            if self.popup_button_region.contain(engine.mouse_X, engine.mouse_Y):
+                self.mouse_over_button = True
+                window.set_mouse_cursor(choose_cur)
+            else:
+                self.mouse_over_button = False
 
     def is_key_pressed(self):
         for _k, v in keys.items():
@@ -451,10 +507,12 @@ boundary_left = SceneObject(id=3, solid=True, name="b_left", x=0, y=0, width=1, 
 boundary_right = SceneObject(id=4, solid=True, name="b_right", x=639, y=0, width=1, height=SCREENH)
 body_bass = SceneObject(id=5, solid=True, name="bass_body", x=260, y=235, sprite=Bedroom.b_body_spr)
 outline_bass = SceneObject(id=6, solid=False, name="bass_outline", x=260, y=285, width=87, height=205, sprite=Bedroom.b_outline, visible=False)
+outline_bed = SceneObject(id=7, solid=False, name="bed_outline", x=80, y=240, sprite=Bedroom.bd_outline, visible=False)
 bedroom = Bedroom()
 
 # Add all the scene objects
 bedroom.obj_list.append(wall)
+bedroom.obj_list.append(outline_bed)
 bedroom.obj_list.append(bed)
 bedroom.obj_list.append(boundary_down)
 bedroom.obj_list.append(boundary_left)
