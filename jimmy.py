@@ -15,6 +15,9 @@ room_floor = resource.image('bg.png')
 dark_effect = resource.image('effect.png')
 bed_img = resource.image('bed.png')
 wall_img = resource.image('wall.png')
+bass_body = resource.image('bass.png')
+bass_neck = resource.image('bass_neck.png')
+bass_outline = resource.image('bass_outline.png')
 
 # Window stuff
 SCREENW = 640
@@ -40,6 +43,8 @@ def center_image(image):
 
 center_image(bed_img)
 center_image(wall_img)
+center_image(bass_body)
+center_image(bass_neck)
 
 
 # GL stuff
@@ -288,6 +293,8 @@ class Bedroom(Screen):
     effect = sprite.Sprite(dark_effect, x=0, y=0)
     bed_spr = sprite.Sprite(bed_img, x=0, y=0)
     wall_spr = sprite.Sprite(wall_img, x=0, y=0)
+    b_body_spr = sprite.Sprite(bass_body, x=0, y=0)
+    b_neck_spr = sprite.Sprite(bass_neck, x=260, y=322)
 
     def __init__(self):
         self.collide_test = Region(100, 100, 100, 100)
@@ -301,6 +308,7 @@ class Bedroom(Screen):
                 obj.sprite.draw()
 
         player.draw()
+        self.b_neck_spr.draw()
         self.effect.draw()
         # Debugging
         #player.hitbox.draw()
@@ -386,6 +394,7 @@ bed = SceneObject(id=1, solid=True, name="bed", x=80, y=240, sprite=Bedroom.bed_
 boundary_down = SceneObject(id=2, solid=True, name="b_bottom", x=0, y=0, width=SCREENW, height=1)
 boundary_left = SceneObject(id=3, solid=True, name="b_left", x=0, y=0, width=1, height=SCREENH)
 boundary_right = SceneObject(id=4, solid=True, name="b_right", x=639, y=0, width=1, height=SCREENH)
+body_bass = SceneObject(id=5, solid=True, name="bass_body", x=260, y=235, sprite=Bedroom.b_body_spr)
 bedroom = Bedroom()
 
 # Add all the scene objects
@@ -394,6 +403,7 @@ bedroom.obj_list.append(bed)
 bedroom.obj_list.append(boundary_down)
 bedroom.obj_list.append(boundary_left)
 bedroom.obj_list.append(boundary_right)
+bedroom.obj_list.append(body_bass)
 engine = Engine(bedroom)
 
 
