@@ -5,7 +5,6 @@ from pyglet import resource
 from pyglet import sprite
 from pyglet.gl import gl
 from pyglet import clock
-from math import sqrt
 
 # Resource-related
 resource.path = ['./resources']
@@ -14,7 +13,8 @@ pyglet.options['debug_gl'] = False
 
 room_floor = resource.image('bg.png')
 dark_effect = resource.image('effect.png')
-icon = resource.image('icon.png')
+bed_img = resource.image('bed.png')
+wall_img = resource.image('wall.png')
 
 # Window stuff
 SCREENW = 640
@@ -37,7 +37,10 @@ def center_image(image):
     image.anchor_x = image.width / 2
     image.anchor_y = image.height / 2
 
-center_image(icon)
+
+center_image(bed_img)
+center_image(wall_img)
+
 
 # GL stuff
 gl.glEnable(gl.GL_BLEND)
@@ -172,7 +175,7 @@ class Player():
         new_hitbox = Region(new_x - 40 // 2,
                             new_y - 70 // 2,
                             width=40,
-                            height=70)
+                            height=40)
         obj_hit = self.detect_collision(new_hitbox)
 
         if obj_hit != None:
@@ -254,23 +257,37 @@ class Screen():
 
 
 class SceneObject():
-    def __init__(self, id, solid, name, sprite, x, y):
+    def __init__(self, id, solid, name, x, y, width=0, height=0, sprite=None):
         self.id = id
         self.solid = solid
         self.name = name
         self.sprite = sprite
         self.x = x
         self.y = y
-        self.sprite.x = self.x
-        self.sprite.y = self.y
-        self.hitbox = Region(self.x - self.sprite.width // 2, self.y - self.sprite.height // 2, self.sprite.width, self.sprite.height)
+        self.width = width
+        self.height = height
+
+        if sprite != None:
+            self.sprite.x = self.x
+            self.sprite.y = self.y
+            self.hitbox = Region(self.x - self.sprite.width // 2,
+                                 self.y - self.sprite.height // 2,
+                                 self.sprite.width,
+                                 self.sprite.height)
+
+        else:
+            self.hitbox = Region(self.x,
+                                 self.y,
+                                 self.width,
+                                 self.height)
 
 
 class Bedroom(Screen):
 
     floor = sprite.Sprite(room_floor, x=0, y=0)
     effect = sprite.Sprite(dark_effect, x=0, y=0)
-    image_test = sprite.Sprite(icon, x=0, y=0)
+    bed_spr = sprite.Sprite(bed_img, x=0, y=0)
+    wall_spr = sprite.Sprite(wall_img, x=0, y=0)
 
     def __init__(self):
         self.collide_test = Region(100, 100, 100, 100)
@@ -278,14 +295,15 @@ class Bedroom(Screen):
 
     def draw(self):
         self.floor.draw()
-        player.draw()
-        self.effect.draw()
         
         for obj in self.obj_list:
-            obj.sprite.draw()
+            if obj.sprite != None:
+                obj.sprite.draw()
 
+        player.draw()
+        self.effect.draw()
         # Debugging
-        ...
+        #player.hitbox.draw()
 
     def on_click(self, x, y, button):
         pass
@@ -363,9 +381,19 @@ class Bedroom(Screen):
 # Instances of classes
 # Screens go first
 player = Player()
-bed = SceneObject(id=1, solid=True, name="bed", sprite=Bedroom.image_test, x=100, y=100)
+wall = SceneObject(id=0, solid=True, name="wall", x=320, y=372, sprite=Bedroom.wall_spr)
+bed = SceneObject(id=1, solid=True, name="bed", x=80, y=240, sprite=Bedroom.bed_spr)
+boundary_down = SceneObject(id=2, solid=True, name="b_bottom", x=0, y=0, width=SCREENW, height=1)
+boundary_left = SceneObject(id=3, solid=True, name="b_left", x=0, y=0, width=1, height=SCREENH)
+boundary_right = SceneObject(id=4, solid=True, name="b_right", x=639, y=0, width=1, height=SCREENH)
 bedroom = Bedroom()
+
+# Add all the scene objects
+bedroom.obj_list.append(wall)
 bedroom.obj_list.append(bed)
+bedroom.obj_list.append(boundary_down)
+bedroom.obj_list.append(boundary_left)
+bedroom.obj_list.append(boundary_right)
 engine = Engine(bedroom)
 
 
