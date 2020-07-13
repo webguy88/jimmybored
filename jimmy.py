@@ -38,6 +38,9 @@ button_play = resource.image('button_play.png')
 info = resource.image('info.png')
 
 credits_back = resource.image('credits_back.png')
+pageL = resource.image('pageL.png')
+pageR = resource.image('pageR.png')
+controls_screen = resource.image('controls_screen.png')
 
 low_E = resource.media('bass_low_E.wav', streaming=False)
 low_F = resource.media('bass_low_F.wav', streaming=False)
@@ -430,12 +433,19 @@ class MainMenu(Screen):
 class Credit(Screen):
 
     go_back = sprite.Sprite(credits_back, x=80, y=430)
+    page_left = sprite.Sprite(pageL, x=240, y=5)
+    page_right = sprite.Sprite(pageR, x=310, y=5)
+    controls = sprite.Sprite(controls_screen, x=0, y=0)
 
     def __init__(self):
         self.obj_list = []
         self.back_region = Region(self.go_back.x - self.go_back.width // 2,
                                   self.go_back.y - self.go_back.height // 2,
                                   135, 86)
+
+        self.go_left_region = Region(240, 5, 64, 64)
+        self.go_right_region = Region(310, 5, 64, 64)
+        self.page = 1
 
         # Text
         self.license = pyglet.text.Label(
@@ -490,13 +500,26 @@ class Credit(Screen):
         bedroom.b_neck_spr.draw()
         main_menu.dark.draw()
 
-        self.license.draw()
-        self.license_header.draw()
+        if self.page == 1:
+            self.license.draw()
+            self.license_header.draw()
+            self.page_right.draw()
+        
+        elif self.page == 2:
+            self.controls.draw()
+            self.page_left.draw()
+
         self.go_back.draw()
 
     def on_click(self, x, y, button):
         if self.back_region.contain(x, y):
             engine.set_current_screen(main_menu)
+
+        if self.go_left_region.contain(x, y) and self.page == 2:
+            self.page = 1
+
+        elif self.go_right_region.contain(x, y) and self.page == 1:
+            self.page = 2
 
     def on_key_press(self, symbol, modifiers):
         pass
@@ -504,6 +527,14 @@ class Credit(Screen):
     def update(self, dt):
         if self.back_region.contain(engine.mouse_X, engine.mouse_Y):
             window.set_mouse_cursor(choose_cur)
+
+        if self.go_left_region.contain(engine.mouse_X, engine.mouse_Y) and \
+           self.page == 2:
+            window.set_mouse_cursor(choose_cur)
+
+        elif self.go_right_region.contain(engine.mouse_X, engine.mouse_Y) and \
+             self.page == 1:
+                window.set_mouse_cursor(choose_cur)
 
 
 class Bedroom(Screen):
