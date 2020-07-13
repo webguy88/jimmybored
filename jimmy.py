@@ -35,6 +35,9 @@ menu_screen = resource.image('main_menu.png')
 menu_dark = resource.image('menu_dark.png')
 logo = resource.image('logo.png')
 button_play = resource.image('button_play.png')
+info = resource.image('info.png')
+
+credits_back = resource.image('credits_back.png')
 
 low_E = resource.media('bass_low_E.wav', streaming=False)
 low_F = resource.media('bass_low_F.wav', streaming=False)
@@ -107,6 +110,9 @@ center_image(popup_button_S)
 
 center_image(logo)
 center_image(button_play)
+center_image(info)
+
+center_image(credits_back)
 
 GAME = "game"
 MSG = "message"
@@ -366,12 +372,27 @@ class MainMenu(Screen):
     dark = sprite.Sprite(menu_dark, x=0, y=0)
     logo_spr = sprite.Sprite(logo, x=320, y=380)
     button = sprite.Sprite(button_play, x=320, y=150)
+    info_button = sprite.Sprite(info, x=35, y=35)
 
     def __init__(self):
         self.obj_list = []
         self.play_region = Region(self.button.x - self.button.width // 2,
                                   self.button.y - self.button.height // 2,
                                   234, 84)
+        self.info_button_region = Region(self.info_button.x - self.info_button.width // 2,
+                                         self.info_button.y - self.info_button.height // 2,
+                                         64, 64)
+
+        self.version_text = text.Label("v 1.0", x=608, y=40,
+                                       anchor_x='center', anchor_y='center',
+                                       font_size=16, color=(255, 255, 255, 255),
+                                       bold=True)
+
+        self.copyrights = text.Label("Made by webguy88 in 2020",
+                                     x=495, y=15,
+                                     anchor_x='center', anchor_y='center',
+                                     font_size=16, color=(255, 255, 255, 255),
+                                     bold=True)
 
     def draw(self):
         self.menu.draw()
@@ -384,16 +405,104 @@ class MainMenu(Screen):
         self.dark.draw()
         self.logo_spr.draw()
         self.button.draw()
+        self.info_button.draw()
+        self.version_text.draw()
+        self.copyrights.draw()
 
     def on_click(self, x, y, button):
         if self.play_region.contain(x, y):
             engine.set_current_screen(bedroom)
+
+        if self.info_button_region.contain(x, y):
+            engine.set_current_screen(credit_screen)
 
     def on_key_press(self, symbol, modifiers):
         pass
 
     def update(self, dt):
         if self.play_region.contain(engine.mouse_X, engine.mouse_Y):
+            window.set_mouse_cursor(choose_cur)
+
+        if self.info_button_region.contain(engine.mouse_X, engine.mouse_Y):
+            window.set_mouse_cursor(choose_cur)
+
+
+class Credit(Screen):
+
+    go_back = sprite.Sprite(credits_back, x=80, y=430)
+
+    def __init__(self):
+        self.obj_list = []
+        self.back_region = Region(self.go_back.x - self.go_back.width // 2,
+                                  self.go_back.y - self.go_back.height // 2,
+                                  135, 86)
+
+        # Text
+        self.license = pyglet.text.Label(
+            """
+            Copyright (c) 2006-2008 Alex Holkner
+    Copyright (c) 2008-2020 pyglet contributors
+    All rights reserved.
+
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions are met:
+
+        * Redistributions of source code must retain the above copyright
+            notice, this list of conditions and the following disclaimer.
+        * Redistributions in binary form must reproduce the above copyright
+            notice, this list of conditions and the following disclaimer in
+            the documentation and/or other materials provided with the
+            distribution.
+        * Neither the name of pyglet nor the names of its
+            contributors may be used to endorse or promote products
+            derived from this software without specific prior written
+            permission.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+    FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+    COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+    INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+    BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+    LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+    CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+    LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+    ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+    POSSIBILITY OF SUCH DAMAGE.
+            """,
+            x=440, y=165, anchor_x='center', anchor_y='center', font_size=8,
+            bold=True, color=(255, 255, 255, 255),
+            multiline=True, width=640, height=480
+        )
+
+        self.license_header = pyglet.text.Label("License", x=320, y=430,
+                                                anchor_x='center', anchor_y='center',
+                                                font_size=24, bold=True, color=(255, 255, 255, 255))
+
+    def draw(self):
+        bedroom.floor.draw()
+
+        for obj in self.obj_list:
+            if obj.sprite != None and obj.visible:
+                obj.sprite.draw()
+
+        bedroom.b_neck_spr.draw()
+        main_menu.dark.draw()
+
+        self.license.draw()
+        self.license_header.draw()
+        self.go_back.draw()
+
+    def on_click(self, x, y, button):
+        if self.back_region.contain(x, y):
+            engine.set_current_screen(main_menu)
+
+    def on_key_press(self, symbol, modifiers):
+        pass
+
+    def update(self, dt):
+        if self.back_region.contain(engine.mouse_X, engine.mouse_Y):
             window.set_mouse_cursor(choose_cur)
 
 
@@ -701,15 +810,22 @@ outline_desktop = SceneObject(id=11, solid=False, name="desktop_outline", x=480,
 ...
 
 main_menu = MainMenu()
+credit_screen = Credit()
 bedroom = Bedroom()
 fishing_game = FishingGame()
-engine = Engine(main_menu)
+engine = Engine(credit_screen)
 
 # Add all the scene objects
 main_menu.obj_list.append(bed)  # Main menu
 main_menu.obj_list.append(body_bass)
 main_menu.obj_list.append(trash)
 main_menu.obj_list.append(desktop)
+
+credit_screen.obj_list.append(wall)  # Credit screen
+credit_screen.obj_list.append(bed)
+credit_screen.obj_list.append(body_bass)
+credit_screen.obj_list.append(trash)
+credit_screen.obj_list.append(desktop)
 
 bedroom.obj_list.append(wall)  # Bedroom
 bedroom.obj_list.append(outline_bed)
