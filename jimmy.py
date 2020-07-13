@@ -23,6 +23,9 @@ bass_outline = resource.image('bass_outline.png')
 bed_outline = resource.image('bed_outline.png')
 trash_can = resource.image('trash_can.png')
 trash_outline = resource.image('trash_outline.png')
+desk = resource.image('desk.png')
+desk_outline = resource.image('desk_outline.png')
+desk_game = resource.image('desk_game.png')
 game_disc = resource.image('game_disc.png')
 message_show = resource.image('message_show.png')
 popup_button_U = resource.image('popup_button_U.png')
@@ -89,6 +92,9 @@ center_image(bass_outline)
 center_image(bed_outline)
 center_image(trash_can)
 center_image(trash_outline)
+center_image(desk)
+center_image(desk_outline)
+center_image(desk_game)
 center_image(game_disc)
 center_image(popup_button_U)
 center_image(popup_button_S)
@@ -203,7 +209,7 @@ class Player():
             img.anchor_y = img.width / 2
 
         self.x = 320
-        self.y = 240
+        self.y = 148
         self.vx = 0
         self.vy = 0
         self.direction = 1
@@ -216,6 +222,7 @@ class Player():
         self.is_over_bass = False
         self.is_over_bed = False
         self.is_over_trash = False
+        self.is_over_desktop = False
         self.has_game = False
 
     def draw(self):
@@ -356,6 +363,9 @@ class Bedroom(Screen):
     bd_outline = sprite.Sprite(bed_outline, x=0, y=0)
     trash = sprite.Sprite(trash_can, x=0, y=0)
     tr_outline = sprite.Sprite(trash_outline, x=0, y=0)
+    desk_spr = sprite.Sprite(desk, x=0, y=0)
+    desk_out = sprite.Sprite(desk_outline, x=0, y=0)
+    desk_w_game = sprite.Sprite(desk_game, x=0, y=0)
     disc = sprite.Sprite(game_disc, x=600, y=435)
     popup = sprite.Sprite(message_show, x=0, y=0)
     popup_button_un = sprite.Sprite(popup_button_U, x=320, y=100)
@@ -394,6 +404,27 @@ class Bedroom(Screen):
             """
              You already looked in here...
             """, x=280, y=160,
+                 anchor_x='center', anchor_y='center',
+                 font_size=24, color=(255, 255, 255, 255),
+                 multiline=True, width=562, height=357
+        )
+
+        self.game_text1 = text.Label(
+            """
+             Seems like the perfect spot
+                         for a game...
+
+            """, x=280, y=140,
+                 anchor_x='center', anchor_y='center',
+                 font_size=24, color=(255, 255, 255, 255),
+                 multiline=True, width=562, height=357
+        )
+
+        self.game_text2 = text.Label(
+            """
+            Looks like you have a game!
+              Do you want to play it?
+            """, x=280, y=140,
                  anchor_x='center', anchor_y='center',
                  font_size=24, color=(255, 255, 255, 255),
                  multiline=True, width=562, height=357
@@ -438,6 +469,10 @@ class Bedroom(Screen):
                 self.layer = GAME
                 player.has_game = True
 
+            if self.popup_button_region.contain(x, y) and \
+               self.message == self.game_text2:
+                engine.set_current_screen(fishing_game)
+
     def on_key_press(self, symbol, modifiers):
         if self.layer == GAME:
             if player.is_over_bass and symbol == key.SPACE:
@@ -456,6 +491,16 @@ class Bedroom(Screen):
                  and player.has_game:
                 self.layer = MSG
                 self.message = self.trash_text2
+
+            if player.is_over_desktop and symbol == key.SPACE \
+               and not player.has_game:
+                 self.layer = MSG
+                 self.message = self.game_text1
+
+            if player.is_over_desktop and symbol == key.SPACE \
+               and player.has_game:
+                 self.layer = MSG
+                 self.message = self.game_text2
 
     def update(self, dt):
 
@@ -531,6 +576,13 @@ class Bedroom(Screen):
             else:
                 outline_trash.visible = False
                 player.is_over_trash = False
+
+            if player.hitbox.collides(outline_desktop.hitbox):
+                outline_desktop.visible = True
+                player.is_over_desktop = True
+            else:
+                outline_desktop.visible = False
+                player.is_over_desktop = False
             
         # ~~~~~~~~~~~~~~
 
@@ -554,9 +606,28 @@ class Bedroom(Screen):
 # ~~~~~~~~~
 
 
+class FishingGame(Screen):
+    def __init__(self):
+        self.obj_list = []
+
+    def draw(self):
+        pass
+
+    def on_click(self, x, y, button):
+        pass
+
+    def on_key_press(self, symbol, modifiers):
+        pass
+
+    def update(self, dt):
+        pass
+
+
 # Instances of classes
 # Screens go first
 player = Player()
+
+# Bedroom objects
 wall = SceneObject(id=0, solid=True, name="wall", x=320, y=372, sprite=Bedroom.wall_spr)
 bed = SceneObject(id=1, solid=True, name="bed", x=80, y=240, sprite=Bedroom.bed_spr)
 boundary_down = SceneObject(id=2, solid=True, name="b_bottom", x=320, y=0, width=SCREENW, height=1)
@@ -567,7 +638,14 @@ outline_bass = SceneObject(id=6, solid=False, name="bass_outline", x=260, y=285,
 outline_bed = SceneObject(id=7, solid=False, name="bed_outline", x=80, y=240, sprite=Bedroom.bd_outline, visible=False)
 trash = SceneObject(id=8, solid=True, name="trash_can", x=580, y=50, sprite=Bedroom.trash)
 outline_trash = SceneObject(id=9, solid=False, name="trash_outline", x=580, y=50, width=80, height=80, sprite=Bedroom.tr_outline, visible=False)
+desktop = SceneObject(id=10, solid=True, name="desktop", x=480, y=255, sprite=Bedroom.desk_spr)
+outline_desktop = SceneObject(id=11, solid=False, name="desktop_outline", x=480, y=255, width=190, height=125, sprite=Bedroom.desk_out, visible=False)
+
+# Fishing game objects
+...
+
 bedroom = Bedroom()
+fishing_game = FishingGame()
 
 # Add all the scene objects
 bedroom.obj_list.append(wall)
@@ -580,6 +658,8 @@ bedroom.obj_list.append(outline_bass)
 bedroom.obj_list.append(body_bass)
 bedroom.obj_list.append(outline_trash)
 bedroom.obj_list.append(trash)
+bedroom.obj_list.append(outline_desktop)
+bedroom.obj_list.append(desktop)
 
 engine = Engine(bedroom)
 
