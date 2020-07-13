@@ -7,6 +7,7 @@ from pyglet.gl import gl
 from pyglet import clock
 from pyglet import text
 from random import randint
+from time import sleep
 
 # Resource-related
 resource.path = ['./resources']
@@ -42,6 +43,9 @@ pageL = resource.image('pageL.png')
 pageR = resource.image('pageR.png')
 controls_screen = resource.image('controls_screen.png')
 
+fisher_menu = resource.image('fisher_menu.png')
+tv_effect = resource.image('tv_effect.png')
+
 low_E = resource.media('bass_low_E.wav', streaming=False)
 low_F = resource.media('bass_low_F.wav', streaming=False)
 low_G = resource.media('bass_low_G.wav', streaming=False)
@@ -56,6 +60,7 @@ high_A = resource.media('bass_high_A.wav', streaming=False)
 high_B = resource.media('bass_high_B.wav', streaming=False)
 high_C = resource.media('bass_high_C.wav', streaming=False)
 select = resource.media('select.wav', streaming=False)
+fisher_begin = resource.media('fisher_begin.wav', streaming=False)
 
 
 bass_notes = [
@@ -210,6 +215,9 @@ class Player():
         resource.image('playerL_walk2.png')
     ]
 
+    fisher_sprite = resource.image('fisher_sprite.png')
+    fisher_grab = resource.image('fisher_sprite_grab.png')
+
     jimmy_right = pyglet.image.Animation.from_image_sequence(images_walking_r, duration=0.1, loop=True)
     jimmy_left = pyglet.image.Animation.from_image_sequence(images_walking_l, duration=0.1, loop=True)
 
@@ -226,6 +234,9 @@ class Player():
             img.anchor_x = img.width / 2
             img.anchor_y = img.width / 2
 
+        center_image(self.fisher_sprite)
+        center_image(self.fisher_grab)
+
         self.x = 320
         self.y = 148
         self.vx = 0
@@ -235,7 +246,9 @@ class Player():
         self.jimmy_idle = sprite.Sprite(self.images_idle[0])
         self.jimmy_walk_r = sprite.Sprite(self.jimmy_right)
         self.jimmy_walk_l = sprite.Sprite(self.jimmy_left)
-        self.jimmy_sprite = self.jimmy_walk_r
+        self.fisherman = sprite.Sprite(self.fisher_sprite)
+        self.fisherman_grab = sprite.Sprite(self.fisher_grab)
+        self.sprite = self.jimmy_walk_r
         self.hitbox = Region(self.x, self.y, 40, 70)
         self.is_over_bass = False
         self.is_over_bed = False
@@ -244,7 +257,7 @@ class Player():
         self.has_game = False
 
     def draw(self):
-        self.jimmy_sprite.draw()
+        self.sprite.draw()
 
     def detect_collision(self, hitbox):
         # Check if there's no collision between objects
@@ -261,28 +274,44 @@ class Player():
                             height=40)
         obj_hit = self.detect_collision(new_hitbox)
 
-        if obj_hit != None:
-            self.vx = 0
-            self.vy = 0
-            self.jimmy_sprite = self.jimmy_idle
-            self.jimmy_sprite.x = self.x
-            self.jimmy_sprite.y = self.y
-            return
+        if engine.current_screen == bedroom:
+            if obj_hit != None:
+                self.vx = 0
+                self.vy = 0
+                self.sprite = self.jimmy_idle
+                self.sprite.x = self.x
+                self.sprite.y = self.y
+                return
+
+        elif engine.current_screen == fishing_game:
+            if obj_hit != None:
+                self.vx = 0
+                self.sprite = self.fisherman
+                self.sprite.x = self.x
+                self.sprite.y = self.y
+                return
 
         # Calculate Jimmy sprite
-        if not self.walking:
-            self.jimmy_sprite = self.jimmy_idle
+        if engine.current_screen == bedroom:
+            if not self.walking:
+                self.sprite = self.jimmy_idle
 
-        if self.walking and self.direction == 0:
-            self.jimmy_sprite = self.jimmy_walk_r
+            if self.walking and self.direction == 0:
+                self.sprite = self.jimmy_walk_r
 
-        elif self.walking and self.direction == 1:
-            self.jimmy_sprite = self.jimmy_walk_l
+            elif self.walking and self.direction == 1:
+                self.sprite = self.jimmy_walk_l
+
+        if engine.current_screen == fishing_game:
+            if not fishing_game.caught_something:
+                self.sprite = self.fisherman
+            else:
+                self.sprite = self.fisherman_grab
 
         self.x = new_x
         self.y = new_y  # It's physics time :P
-        self.jimmy_sprite.x = self.x
-        self.jimmy_sprite.y = self.y
+        self.sprite.x = self.x
+        self.sprite.y = self.y
 
         # Update region
         self.hitbox = new_hitbox
@@ -801,22 +830,72 @@ class Bedroom(Screen):
 
 
 class FishingGame(Screen):
+
+    menu = sprite.Sprite(fisher_menu, x=0, y=0)
+    effect = sprite.Sprite(tv_effect, x=0, y=0)
+
     def __init__(self):
         self.obj_list = []
+        self.has_game_started = False
+        self.press_text = text.Label('Press ENTER to begin!',
+                                     x=145, y=180, anchor_x='center',
+                                     anchor_y='center', font_size=16,
+                                     color=(255, 255, 255, 255),
+                                     bold=True)
+                                    
+        self.fishing_rod_region = Region(player.fisherman.x - 10,
+                                         player.fisherman.y - 10,
+                                         50, 50)
+
+        self.caught_something = False
 
     def draw(self):
+        if not self.has_game_started:
+            self.menu.draw()
+            self.press_text.draw()
+
+        else:
+            player.draw()
+            #self.fishing_rod_region.draw()
+
         for obj in self.obj_list:
             if obj.sprite != None and obj.visible:
                 obj.sprite.draw()
+
+        self.effect.draw()
 
     def on_click(self, x, y, button):
         pass
 
     def on_key_press(self, symbol, modifiers):
-        pass
+        if symbol == key.ENTER:
+            self.has_game_started = True
+            fisher_begin.play()
+            player.x = 500
+            player.y = 130
 
     def update(self, dt):
-        pass
+        if self.has_game_started:
+
+            if keys[key.A]:
+                #player.change_direction(0, -270, 0)
+                if player.vx > -500:
+                    player.vx -= 20
+
+            if keys[key.D]:
+                #player.change_direction(0, 270, 0)
+                if player.vx < 500:
+                    player.vx += 20
+
+            self.fishing_rod_region.x = player.fisherman.x - 85
+            self.fishing_rod_region.y = player.fisherman.y - 100
+
+    def is_key_pressed(self):
+        for _k, v in keys.items():
+            if v:
+                return True
+        
+        return False
 
 
 # Instances of classes
@@ -844,7 +923,7 @@ main_menu = MainMenu()
 credit_screen = Credit()
 bedroom = Bedroom()
 fishing_game = FishingGame()
-engine = Engine(credit_screen)
+engine = Engine(fishing_game)
 
 # Add all the scene objects
 main_menu.obj_list.append(bed)  # Main menu
@@ -871,7 +950,8 @@ bedroom.obj_list.append(trash)
 bedroom.obj_list.append(outline_desktop)
 bedroom.obj_list.append(desktop)
 
-...  # Fishing game
+fishing_game.obj_list.append(boundary_left)  # Fishing game
+fishing_game.obj_list.append(boundary_right)
 
 
 @window.event
