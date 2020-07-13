@@ -31,6 +31,11 @@ message_show = resource.image('message_show.png')
 popup_button_U = resource.image('popup_button_U.png')
 popup_button_S = resource.image('popup_button_S.png')
 
+menu_screen = resource.image('main_menu.png')
+menu_dark = resource.image('menu_dark.png')
+logo = resource.image('logo.png')
+button_play = resource.image('button_play.png')
+
 low_E = resource.media('bass_low_E.wav', streaming=False)
 low_F = resource.media('bass_low_F.wav', streaming=False)
 low_G = resource.media('bass_low_G.wav', streaming=False)
@@ -44,6 +49,7 @@ high_G = resource.media('bass_high_G.wav', streaming=False)
 high_A = resource.media('bass_high_A.wav', streaming=False)
 high_B = resource.media('bass_high_B.wav', streaming=False)
 high_C = resource.media('bass_high_C.wav', streaming=False)
+select = resource.media('select.wav', streaming=False)
 
 
 bass_notes = [
@@ -98,6 +104,9 @@ center_image(desk_game)
 center_image(game_disc)
 center_image(popup_button_U)
 center_image(popup_button_S)
+
+center_image(logo)
+center_image(button_play)
 
 GAME = "game"
 MSG = "message"
@@ -351,6 +360,43 @@ class SceneObject():
                                  self.height)
 
 
+class MainMenu(Screen):
+
+    menu = sprite.Sprite(menu_screen, x=0, y=0)
+    dark = sprite.Sprite(menu_dark, x=0, y=0)
+    logo_spr = sprite.Sprite(logo, x=320, y=380)
+    button = sprite.Sprite(button_play, x=320, y=150)
+
+    def __init__(self):
+        self.obj_list = []
+        self.play_region = Region(self.button.x - self.button.width // 2,
+                                  self.button.y - self.button.height // 2,
+                                  234, 84)
+
+    def draw(self):
+        self.menu.draw()
+        bedroom.b_neck_spr.draw()
+
+        for obj in self.obj_list:
+            if obj.sprite != None and obj.visible:
+                obj.sprite.draw()
+            
+        self.dark.draw()
+        self.logo_spr.draw()
+        self.button.draw()
+
+    def on_click(self, x, y, button):
+        if self.play_region.contain(x, y):
+            engine.set_current_screen(bedroom)
+
+    def on_key_press(self, symbol, modifiers):
+        pass
+
+    def update(self, dt):
+        if self.play_region.contain(engine.mouse_X, engine.mouse_Y):
+            window.set_mouse_cursor(choose_cur)
+
+
 class Bedroom(Screen):
 
     floor = sprite.Sprite(room_floor, x=0, y=0)
@@ -479,28 +525,36 @@ class Bedroom(Screen):
                 bass_notes[randint(0, 12)].play()
 
             if player.is_over_bed and symbol == key.SPACE:
+                select.play()
                 self.layer = MSG
                 self.message = self.bed_text
 
             if player.is_over_trash and symbol == key.SPACE \
                and not player.has_game:
+                select.play()
                 self.layer = MSG
-                self.message = self.trash_text1
+                self.message = self.trash_text1       
 
             elif player.is_over_trash and symbol == key.SPACE \
                  and player.has_game:
+                select.play()
                 self.layer = MSG
                 self.message = self.trash_text2
 
             if player.is_over_desktop and symbol == key.SPACE \
                and not player.has_game:
+                 select.play()
                  self.layer = MSG
                  self.message = self.game_text1
 
             if player.is_over_desktop and symbol == key.SPACE \
                and player.has_game:
+                 select.play()
                  self.layer = MSG
                  self.message = self.game_text2
+
+            if symbol == key.R:
+                engine.set_current_screen(main_menu)
 
     def update(self, dt):
 
@@ -611,7 +665,9 @@ class FishingGame(Screen):
         self.obj_list = []
 
     def draw(self):
-        pass
+        for obj in self.obj_list:
+            if obj.sprite != None and obj.visible:
+                obj.sprite.draw()
 
     def on_click(self, x, y, button):
         pass
@@ -644,10 +700,19 @@ outline_desktop = SceneObject(id=11, solid=False, name="desktop_outline", x=480,
 # Fishing game objects
 ...
 
+main_menu = MainMenu()
 bedroom = Bedroom()
 fishing_game = FishingGame()
+engine = Engine(main_menu)
 
 # Add all the scene objects
+if engine.current_screen == main_menu:
+    main_menu.obj_list.append(bed)
+    main_menu.obj_list.append(body_bass)
+    main_menu.obj_list.append(trash)
+    main_menu.obj_list.append(desktop)
+
+
 bedroom.obj_list.append(wall)
 bedroom.obj_list.append(outline_bed)
 bedroom.obj_list.append(bed)
@@ -661,7 +726,8 @@ bedroom.obj_list.append(trash)
 bedroom.obj_list.append(outline_desktop)
 bedroom.obj_list.append(desktop)
 
-engine = Engine(bedroom)
+if engine.current_screen == fishing_game:
+    ...
 
 
 @window.event
