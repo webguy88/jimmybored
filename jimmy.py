@@ -706,14 +706,12 @@ fishing_game = FishingGame()
 engine = Engine(main_menu)
 
 # Add all the scene objects
-if engine.current_screen == main_menu:
-    main_menu.obj_list.append(bed)
-    main_menu.obj_list.append(body_bass)
-    main_menu.obj_list.append(trash)
-    main_menu.obj_list.append(desktop)
+main_menu.obj_list.append(bed)  # Main menu
+main_menu.obj_list.append(body_bass)
+main_menu.obj_list.append(trash)
+main_menu.obj_list.append(desktop)
 
-
-bedroom.obj_list.append(wall)
+bedroom.obj_list.append(wall)  # Bedroom
 bedroom.obj_list.append(outline_bed)
 bedroom.obj_list.append(bed)
 bedroom.obj_list.append(boundary_down)
@@ -726,8 +724,7 @@ bedroom.obj_list.append(trash)
 bedroom.obj_list.append(outline_desktop)
 bedroom.obj_list.append(desktop)
 
-if engine.current_screen == fishing_game:
-    ...
+...  # Fishing game
 
 
 @window.event
