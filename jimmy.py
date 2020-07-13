@@ -44,6 +44,8 @@ pageR = resource.image('pageR.png')
 controls_screen = resource.image('controls_screen.png')
 
 fisher_menu = resource.image('fisher_menu.png')
+fisher_background = resource.image('fisher_background.png')
+fisher_sea = resource.image('fisher_sea.png')
 tv_effect = resource.image('tv_effect.png')
 
 low_E = resource.media('bass_low_E.wav', streaming=False)
@@ -833,16 +835,33 @@ class FishingGame(Screen):
 
     menu = sprite.Sprite(fisher_menu, x=0, y=0)
     effect = sprite.Sprite(tv_effect, x=0, y=0)
+    bg = sprite.Sprite(fisher_background, x=0, y=0)
+    sea = sprite.Sprite(fisher_sea, x=0, y=0)
 
     def __init__(self):
+        self.timer = 100
+        self.fish_count = 0
         self.obj_list = []
-        self.has_game_started = False
+        self.has_game_started = True
         self.press_text = text.Label('Press ENTER to begin!',
                                      x=145, y=180, anchor_x='center',
                                      anchor_y='center', font_size=16,
                                      color=(255, 255, 255, 255),
                                      bold=True)
+
+        self.goal_text = text.Label("""Your goal is to catch at least 30 fish
+before the time runs out.""",
+                                    x=320, y=430, anchor_x='center', anchor_y='center',
+                                    font_size=14, color=(255, 255, 255, 255), bold=True)
                                     
+        self.timer_text = text.Label(f"{self.timer}", x=320, y=400, anchor_x='center',
+                                     anchor_y='center', font_size=24, color=(255, 255, 255, 255),
+                                     bold=True)
+
+        self.fish_text = text.Label(f"{self.fish_count}", x=570, y=400, anchor_x='center',
+                                    anchor_y='center', font_size=24, color=(255, 255, 255, 255),
+                                    bold=True)
+
         self.fishing_rod_region = Region(player.fisherman.x - 10,
                                          player.fisherman.y - 10,
                                          50, 50)
@@ -855,6 +874,11 @@ class FishingGame(Screen):
             self.press_text.draw()
 
         else:
+            self.bg.draw()
+            self.sea.draw()
+            self.goal_text.draw()
+            self.timer_text.draw()
+            self.fish_text.draw()
             player.draw()
             #self.fishing_rod_region.draw()
 
@@ -868,27 +892,41 @@ class FishingGame(Screen):
         pass
 
     def on_key_press(self, symbol, modifiers):
-        if symbol == key.ENTER:
+        if symbol == key.ENTER and not self.has_game_started:
             self.has_game_started = True
             fisher_begin.play()
             player.x = 500
-            player.y = 130
+            player.y = 170
+
+        if symbol == key.SPACE and self.caught_something:
+            self.fish_count += 1
 
     def update(self, dt):
         if self.has_game_started:
 
             if keys[key.A]:
-                #player.change_direction(0, -270, 0)
                 if player.vx > -500:
                     player.vx -= 20
 
             if keys[key.D]:
-                #player.change_direction(0, 270, 0)
                 if player.vx < 500:
                     player.vx += 20
 
             self.fishing_rod_region.x = player.fisherman.x - 85
             self.fishing_rod_region.y = player.fisherman.y - 100
+
+            if self.fishing_rod_region.contain(engine.mouse_X, engine.mouse_Y):
+                self.caught_something = True
+            else:
+                self.caught_something = False
+        
+        self.update_text()
+
+    def fish_timer(self, dt):
+        self.timer -= 1
+
+    def fish_spawner(self, dt):
+        pass
 
     def is_key_pressed(self):
         for _k, v in keys.items():
@@ -896,6 +934,18 @@ class FishingGame(Screen):
                 return True
         
         return False
+
+    def update_text(self):
+        self.timer_text = text.Label(f"{self.timer}", x=320, y=400, anchor_x='center',
+                                     anchor_y='center', font_size=24, color=(255, 255, 255, 255),
+                                     bold=True)
+
+        self.fish_text = text.Label(f"{self.fish_count}", x=570, y=400, anchor_x='center',
+                                    anchor_y='center', font_size=24, color=(255, 255, 255, 255),
+                                    bold=True)
+
+        if self.fish_count > 9:
+            self.fish_text.x = 560
 
 
 # Instances of classes
@@ -983,8 +1033,23 @@ def update(dt):
     player.update(dt)
 
 
+@window.event
+def fish_timer(dt):
+    fishing_game.fish_timer(dt)
+
+
+@window.event
+def fish_spawner(dt):
+    fishing_game.fish_spawner(dt)
+
+
 keys = key.KeyStateHandler()
 window.push_handlers(keys)
 
 clock.schedule_interval(update, 1/30)
+
+if fishing_game.has_game_started:
+    clock.schedule_interval(fish_timer, 1)
+    clock.schedule_interval(fish_spawner, randint(2, 10))
+
 pyglet.app.run()
