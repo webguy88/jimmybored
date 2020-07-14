@@ -16,8 +16,7 @@ You may find secrets, you may not.
 
 How do I run this game?
 ---------------
-You may run the game manually, whereas you'll need Pyglet and to be in the main folder (jimmybored),
-or in the releases tab, where the Windows and Linux files are.
+You may run the game manually, whereas you'll need Pyglet and to be in the main folder (jimmybored), where the Windows and Linux files are.
 To run on Windows just download it and double click it, but for Linux run the following
 ```
   $ git clone https://github.com/webguy88/jimmybored.git
