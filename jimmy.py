@@ -67,6 +67,20 @@ high_C = resource.media('bass_high_C.wav', streaming=False)
 select = resource.media('select.wav', streaming=False)
 fisher_begin = resource.media('fisher_begin.wav', streaming=False)
 got_fish = resource.media('got_fish.wav', streaming=False)
+fisher_lose = resource.media('fisher_lost.wav', streaming=False)
+fisher_win = resource.media('fisher_win.wav', streaming=False)
+
+bg_music = resource.media('bg_music.wav', streaming=False)
+fisher_music = resource.media('fisher_music.wav', streaming=False)
+
+# Looping music
+main_music = pyglet.media.Player()
+main_music.queue(bg_music)
+main_music.loop = True
+
+fish_music = pyglet.media.Player()
+fish_music.queue(fisher_music)
+fish_music.loop = True
 
 bass_notes = [
     low_E,
@@ -491,6 +505,7 @@ class MainMenu(Screen):
         self.info_button.draw()
         self.version_text.draw()
         self.copyrights.draw()
+        main_music.play()
 
     def on_click(self, x, y, button):
         if self.play_region.contain(x, y):
@@ -721,6 +736,9 @@ class Bedroom(Screen):
             else:
                 self.popup_button_un.draw()
 
+        main_music.pause()
+        fish_music.pause()
+
         # Debugging
         ...
 
@@ -941,6 +959,7 @@ before the time runs out.""",
             self.fish_text.draw()
             self.reminder_text.draw()
             self.fish_display.draw()
+            fish_music.play()
             player.draw()
             #self.fishing_rod_region.draw()
 
@@ -958,6 +977,7 @@ before the time runs out.""",
             enemy.draw()
 
         self.effect.draw()
+        main_music.pause()
 
     def on_click(self, x, y, button):
         pass
@@ -1015,10 +1035,14 @@ before the time runs out.""",
 
             if self.timer <= 0 and self.fish_count < 10:
                 self.end_game()
+                fish_music.pause()
+                fisher_lose.play()
                 self.won = False
 
             elif self.timer <= 0 and self.fish_count >= 10:
                 self.end_game()
+                fish_music.pause()
+                fisher_win.play()
                 self.won = True
         
         self.update_text()
@@ -1073,6 +1097,7 @@ before the time runs out.""",
         self.has_game_started = False
         self.caught_something = False
         self.game_finished = True
+        fish_music.pause()
 
         if len(self.enemies) > 0:
             self.enemies.remove(self.enemies[0])
