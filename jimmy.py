@@ -892,7 +892,7 @@ class FishingGame(Screen):
 
     def __init__(self):
         self.enemies = []
-        self.timer = 40
+        self.timer = 60
         self.fish_count = 0
         self.holding_fish = 0
         self.obj_list = []
@@ -967,7 +967,7 @@ before the time runs out.""",
             self.has_game_started = True
             self.game_finished = False
             self.won = False
-            self.timer = 40
+            self.timer = 60
             self.fish_count = 0
             fisher_begin.play()
             player.x = 500
@@ -1064,14 +1064,18 @@ before the time runs out.""",
 
     def begin_game(self):
         clock.schedule_interval(fish_timer, 1)
-        clock.schedule_interval(fish_spawner, 2)
+        clock.schedule_interval(fish_spawner, randint(2, 6))
 
     def end_game(self):
         clock.unschedule(fish_timer)
         clock.unschedule(fish_spawner)
-        self.timer = 40
+        self.timer = 60
         self.has_game_started = False
+        self.caught_something = False
         self.game_finished = True
+
+        if len(self.enemies) > 0:
+            self.enemies.remove(self.enemies[0])
 
 
 # Instances of classes
