@@ -63,7 +63,7 @@ high_B = resource.media('bass_high_B.wav', streaming=False)
 high_C = resource.media('bass_high_C.wav', streaming=False)
 select = resource.media('select.wav', streaming=False)
 fisher_begin = resource.media('fisher_begin.wav', streaming=False)
-
+got_fish = resource.media('got_fish.wav', streaming=False)
 
 bass_notes = [
     low_E,
@@ -190,8 +190,7 @@ class Region(object):
            self.y < r2.y + r2.height and \
            self.height + self.y > r2.y:
             return True
-        
-        # If not in the edge collision
+
         return False
 
 
@@ -354,21 +353,27 @@ class Fish():
             img.anchor_y = img.height // 2
 
         self.x = 0
-        self.y = randint(40, 85)
+        self.y = randint(50, 95)
         self.vx = 0
         self.direction = 0
         self.fish_left = sprite.Sprite(self.fishL, x=self.x, y=self.y)
         self.fish_right = sprite.Sprite(self.fishR, x=self.x, y=self.y)
         self.sprite = self.fish_right
+        self.region = Region(self.sprite.x,
+                             self.sprite.y,
+                             self.sprite.width, self.sprite.height)
 
     def draw(self):
         self.sprite.draw()
+        #self.region.draw()
 
     def update(self, dt):
         self.x += randint(8, 10)
-        self.y += randint(-5, 5)
+        self.y += randint(-2, 2)
         self.sprite.x = self.x
         self.sprite.y = self.y
+        self.region.x = self.sprite.x - self.sprite.width // 2
+        self.region.y = self.sprite.y - self.sprite.height // 2
 
         if self.x > SCREENW + self.sprite.width:
             fishing_game.enemies.remove(self)
@@ -894,7 +899,7 @@ class FishingGame(Screen):
         self.timer = 100
         self.fish_count = 0
         self.obj_list = []
-        self.has_game_started = True
+        self.has_game_started = False
         self.press_text = text.Label('Press ENTER to begin!',
                                      x=145, y=180, anchor_x='center',
                                      anchor_y='center', font_size=16,
@@ -915,7 +920,7 @@ before the time runs out.""",
                                     bold=True)
 
         self.fishing_rod_region = Region(player.fisherman.x - 10,
-                                         player.fisherman.y - 10,
+                                         player.fisherman.y - 5,
                                          50, 50)
 
         self.caught_something = False
@@ -952,9 +957,12 @@ before the time runs out.""",
             fisher_begin.play()
             player.x = 500
             player.y = 170
+            self.begin_game()
 
         if symbol == key.SPACE and self.caught_something:
+            self.enemies.remove(self.enemies[0])
             self.fish_count += 1
+            got_fish.play()
 
     def update(self, dt):
         if self.has_game_started:
@@ -973,10 +981,7 @@ before the time runs out.""",
             self.fishing_rod_region.x = player.fisherman.x - 85
             self.fishing_rod_region.y = player.fisherman.y - 100
 
-            if self.fishing_rod_region.contain(engine.mouse_X, engine.mouse_Y):
-                self.caught_something = True
-            else:
-                self.caught_something = False
+            self.detect_fish_collision()
         
         self.update_text()
 
@@ -987,6 +992,13 @@ before the time runs out.""",
         if len(self.enemies) == 0:
             new_enemy = Fish()
             self.enemies.append(new_enemy)
+
+    def detect_fish_collision(self):
+        if len(self.enemies) > 0:
+            if self.fishing_rod_region.collides(self.enemies[0].region):
+                self.caught_something = True
+            else:
+                self.caught_something = False
 
     def is_key_pressed(self):
         for _k, v in keys.items():
@@ -1007,10 +1019,19 @@ before the time runs out.""",
         if self.fish_count > 9:
             self.fish_text.x = 560
 
+    def begin_game(self):
+        clock.schedule_interval(fish_timer, 1)
+        clock.schedule_interval(fish_spawner, 2)
+
+    def end_game(self):
+        clock.unschedule(fish_timer)
+        clock.unschedule(fish_spawner)
+
 
 # Instances of classes
 # Screens go first
 player = Player()
+fish = Fish()
 
 # Bedroom objects
 wall = SceneObject(id=0, solid=True, name="wall", x=320, y=372, sprite=Bedroom.wall_spr)
@@ -1033,7 +1054,7 @@ main_menu = MainMenu()
 credit_screen = Credit()
 bedroom = Bedroom()
 fishing_game = FishingGame()
-engine = Engine(fishing_game)
+engine = Engine(main_menu)
 
 # Add all the scene objects
 main_menu.obj_list.append(bed)  # Main menu
@@ -1107,9 +1128,5 @@ keys = key.KeyStateHandler()
 window.push_handlers(keys)
 
 clock.schedule_interval(update, 1/30)
-
-if fishing_game.has_game_started:
-    clock.schedule_interval(fish_timer, 1)
-    clock.schedule_interval(fish_spawner, randint(2, 2))
 
 pyglet.app.run()
