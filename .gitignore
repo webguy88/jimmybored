@@ -2,3 +2,5 @@ ideas.txt
 *.png~
 *-autosave.kra
 *kra
+jimmy.spec
+__pycache__
