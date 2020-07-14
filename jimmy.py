@@ -327,6 +327,57 @@ class Player():
         self.jimmy_idle.image = self.images_idle[self.direction]
 
 
+class Fish():
+
+    fish_left_frames = [
+        resource.image('fishL_frame_1.png'),
+        resource.image('fishL_frame_2.png'),
+        resource.image('fishL_frame_3.png')
+    ]
+
+    fish_right_frames = [
+        resource.image('fishR_frame_1.png'),
+        resource.image('fishR_frame_2.png'),
+        resource.image('fishR_frame_3.png')
+    ]
+
+    fishL = pyglet.image.Animation.from_image_sequence(fish_left_frames, duration=0.1, loop=True)
+    fishR = pyglet.image.Animation.from_image_sequence(fish_right_frames, duration=0.1, loop=True)
+
+    def __init__(self):
+        for img in self.fish_left_frames:
+            img.anchor_x = img.width // 2
+            img.anchor_y = img.height // 2
+
+        for img in self.fish_right_frames:
+            img.anchor_x = img.width // 2
+            img.anchor_y = img.height // 2
+
+        self.x = 0
+        self.y = randint(40, 85)
+        self.vx = 0
+        self.direction = 0
+        self.fish_left = sprite.Sprite(self.fishL, x=self.x, y=self.y)
+        self.fish_right = sprite.Sprite(self.fishR, x=self.x, y=self.y)
+        self.sprite = self.fish_right
+
+    def draw(self):
+        self.sprite.draw()
+
+    def update(self, dt):
+        self.x += randint(8, 10)
+        self.y += randint(-5, 5)
+        self.sprite.x = self.x
+        self.sprite.y = self.y
+
+        if self.x > SCREENW + self.sprite.width:
+            fishing_game.enemies.remove(self)
+
+    def change_direction(self, direction, vx):
+        self.direction = direction
+        self.vx = vx
+
+
 class Engine():
     def __init__(self, current_screen):
         self.mouse_X = 0
@@ -839,6 +890,7 @@ class FishingGame(Screen):
     sea = sprite.Sprite(fisher_sea, x=0, y=0)
 
     def __init__(self):
+        self.enemies = []
         self.timer = 100
         self.fish_count = 0
         self.obj_list = []
@@ -886,6 +938,9 @@ before the time runs out.""",
             if obj.sprite != None and obj.visible:
                 obj.sprite.draw()
 
+        for enemy in self.enemies:
+            enemy.draw()
+
         self.effect.draw()
 
     def on_click(self, x, y, button):
@@ -903,6 +958,9 @@ before the time runs out.""",
 
     def update(self, dt):
         if self.has_game_started:
+
+            for enemy in self.enemies:
+                enemy.update(dt)
 
             if keys[key.A]:
                 if player.vx > -500:
@@ -926,7 +984,9 @@ before the time runs out.""",
         self.timer -= 1
 
     def fish_spawner(self, dt):
-        pass
+        if len(self.enemies) == 0:
+            new_enemy = Fish()
+            self.enemies.append(new_enemy)
 
     def is_key_pressed(self):
         for _k, v in keys.items():
@@ -1050,6 +1110,6 @@ clock.schedule_interval(update, 1/30)
 
 if fishing_game.has_game_started:
     clock.schedule_interval(fish_timer, 1)
-    clock.schedule_interval(fish_spawner, randint(2, 10))
+    clock.schedule_interval(fish_spawner, randint(2, 2))
 
 pyglet.app.run()
