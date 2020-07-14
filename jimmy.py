@@ -46,6 +46,9 @@ controls_screen = resource.image('controls_screen.png')
 fisher_menu = resource.image('fisher_menu.png')
 fisher_background = resource.image('fisher_background.png')
 fisher_sea = resource.image('fisher_sea.png')
+fish = resource.image('fish.png')
+fisher_won = resource.image('fisher_won.png')
+fisher_lost = resource.image('fisher_lost.png')
 tv_effect = resource.image('tv_effect.png')
 
 low_E = resource.media('bass_low_E.wav', streaming=False)
@@ -123,6 +126,7 @@ center_image(button_play)
 center_image(info)
 
 center_image(credits_back)
+center_image(fish)
 
 GAME = "game"
 MSG = "message"
@@ -328,26 +332,16 @@ class Player():
 
 class Fish():
 
-    fish_left_frames = [
-        resource.image('fishL_frame_1.png'),
-        resource.image('fishL_frame_2.png'),
-        resource.image('fishL_frame_3.png')
-    ]
-
     fish_right_frames = [
         resource.image('fishR_frame_1.png'),
         resource.image('fishR_frame_2.png'),
-        resource.image('fishR_frame_3.png')
+        resource.image('fishR_frame_3.png'),
+        resource.image('fishR_frame_2.png')
     ]
 
-    fishL = pyglet.image.Animation.from_image_sequence(fish_left_frames, duration=0.1, loop=True)
     fishR = pyglet.image.Animation.from_image_sequence(fish_right_frames, duration=0.1, loop=True)
 
     def __init__(self):
-        for img in self.fish_left_frames:
-            img.anchor_x = img.width // 2
-            img.anchor_y = img.height // 2
-
         for img in self.fish_right_frames:
             img.anchor_x = img.width // 2
             img.anchor_y = img.height // 2
@@ -356,7 +350,6 @@ class Fish():
         self.y = randint(50, 95)
         self.vx = 0
         self.direction = 0
-        self.fish_left = sprite.Sprite(self.fishL, x=self.x, y=self.y)
         self.fish_right = sprite.Sprite(self.fishR, x=self.x, y=self.y)
         self.sprite = self.fish_right
         self.region = Region(self.sprite.x,
@@ -369,7 +362,7 @@ class Fish():
 
     def update(self, dt):
         self.x += randint(8, 10)
-        self.y += randint(-2, 2)
+        self.y += randint(-3, 3)
         self.sprite.x = self.x
         self.sprite.y = self.y
         self.region.x = self.sprite.x - self.sprite.width // 2
@@ -893,51 +886,69 @@ class FishingGame(Screen):
     effect = sprite.Sprite(tv_effect, x=0, y=0)
     bg = sprite.Sprite(fisher_background, x=0, y=0)
     sea = sprite.Sprite(fisher_sea, x=0, y=0)
+    fish_display = sprite.Sprite(fish, x=530, y=360)
+    win_display = sprite.Sprite(fisher_won, x=0, y=0)
+    lose_display = sprite.Sprite(fisher_lost, x=0, y=0)
 
     def __init__(self):
         self.enemies = []
-        self.timer = 100
+        self.timer = 40
         self.fish_count = 0
+        self.holding_fish = 0
         self.obj_list = []
         self.has_game_started = False
+        self.game_finished = False
+        self.won = False
         self.press_text = text.Label('Press ENTER to begin!',
                                      x=145, y=180, anchor_x='center',
                                      anchor_y='center', font_size=16,
                                      color=(255, 255, 255, 255),
                                      bold=True)
 
-        self.goal_text = text.Label("""Your goal is to catch at least 30 fish
+        self.goal_text = text.Label("""Your goal is to catch at least 10 fish
 before the time runs out.""",
                                     x=320, y=430, anchor_x='center', anchor_y='center',
                                     font_size=14, color=(255, 255, 255, 255), bold=True)
                                     
-        self.timer_text = text.Label(f"{self.timer}", x=320, y=400, anchor_x='center',
+        self.timer_text = text.Label(f"{self.timer}", x=320, y=380, anchor_x='center',
                                      anchor_y='center', font_size=24, color=(255, 255, 255, 255),
                                      bold=True)
 
-        self.fish_text = text.Label(f"{self.fish_count}", x=570, y=400, anchor_x='center',
+        self.fish_text = text.Label(f"{self.fish_count}", x=570, y=380, anchor_x='center',
                                     anchor_y='center', font_size=24, color=(255, 255, 255, 255),
                                     bold=True)
 
+        self.reminder_text = text.Label("Remember to hold the fish for enough time before catching!",
+                                        x=320, y=400, anchor_x='center', anchor_y='center',
+                                        font_size=14, color=(255, 255, 255, 255), bold=True)
+
         self.fishing_rod_region = Region(player.fisherman.x - 10,
-                                         player.fisherman.y - 5,
-                                         50, 50)
+                                         player.fisherman.y - 1,
+                                         50, 30)
 
         self.caught_something = False
 
     def draw(self):
-        if not self.has_game_started:
+        if not self.has_game_started and not self.game_finished:
             self.menu.draw()
             self.press_text.draw()
 
-        else:
+        if self.has_game_started and not self.game_finished:
             self.bg.draw()
             self.sea.draw()
             self.goal_text.draw()
             self.timer_text.draw()
             self.fish_text.draw()
+            self.reminder_text.draw()
+            self.fish_display.draw()
             player.draw()
             #self.fishing_rod_region.draw()
+
+        if self.game_finished and not self.won:
+            self.lose_display.draw()
+
+        elif self.game_finished and self.won:
+            self.win_display.draw()
 
         for obj in self.obj_list:
             if obj.sprite != None and obj.visible:
@@ -954,15 +965,34 @@ before the time runs out.""",
     def on_key_press(self, symbol, modifiers):
         if symbol == key.ENTER and not self.has_game_started:
             self.has_game_started = True
+            self.game_finished = False
+            self.won = False
+            self.timer = 40
+            self.fish_count = 0
             fisher_begin.play()
             player.x = 500
             player.y = 170
             self.begin_game()
 
-        if symbol == key.SPACE and self.caught_something:
+        if symbol == key.BACKSPACE and not self.has_game_started:
+            player.x = 320
+            player.y = 148
+            engine.set_current_screen(bedroom)
+
+        if symbol == key.SPACE and self.caught_something and \
+           self.holding_fish >= 10 and not self.game_finished:
             self.enemies.remove(self.enemies[0])
             self.fish_count += 1
             got_fish.play()
+            self.caught_something = False
+
+        if symbol == key.SPACE and self.game_finished:
+            self.has_game_started = True
+
+        elif symbol == key.BACKSPACE and self.game_finished:
+            player.x = 320
+            player.y = 148
+            engine.set_current_screen(bedroom)
 
     def update(self, dt):
         if self.has_game_started:
@@ -982,6 +1012,14 @@ before the time runs out.""",
             self.fishing_rod_region.y = player.fisherman.y - 100
 
             self.detect_fish_collision()
+
+            if self.timer <= 0 and self.fish_count < 10:
+                self.end_game()
+                self.won = False
+
+            elif self.timer <= 0 and self.fish_count >= 10:
+                self.end_game()
+                self.won = True
         
         self.update_text()
 
@@ -996,9 +1034,13 @@ before the time runs out.""",
     def detect_fish_collision(self):
         if len(self.enemies) > 0:
             if self.fishing_rod_region.collides(self.enemies[0].region):
-                self.caught_something = True
+                self.holding_fish += 1
             else:
                 self.caught_something = False
+                self.holding_fish = 0
+
+            if self.holding_fish >= 10:
+                self.caught_something = True
 
     def is_key_pressed(self):
         for _k, v in keys.items():
@@ -1008,16 +1050,17 @@ before the time runs out.""",
         return False
 
     def update_text(self):
-        self.timer_text = text.Label(f"{self.timer}", x=320, y=400, anchor_x='center',
+        self.timer_text = text.Label(f"{self.timer}", x=320, y=360, anchor_x='center',
                                      anchor_y='center', font_size=24, color=(255, 255, 255, 255),
                                      bold=True)
 
-        self.fish_text = text.Label(f"{self.fish_count}", x=570, y=400, anchor_x='center',
+        self.fish_text = text.Label(f"{self.fish_count}", x=570, y=360, anchor_x='center',
                                     anchor_y='center', font_size=24, color=(255, 255, 255, 255),
                                     bold=True)
 
         if self.fish_count > 9:
             self.fish_text.x = 560
+            self.fish_display.x = 520
 
     def begin_game(self):
         clock.schedule_interval(fish_timer, 1)
@@ -1026,6 +1069,9 @@ before the time runs out.""",
     def end_game(self):
         clock.unschedule(fish_timer)
         clock.unschedule(fish_spawner)
+        self.timer = 40
+        self.has_game_started = False
+        self.game_finished = True
 
 
 # Instances of classes
