@@ -1,4 +1,4 @@
-# Jimmy is Bored
+![](./thumbnail.png)
 ## What can you do on this game, you may ask?
 
 ![](./resources/playerR.png)
@@ -29,3 +29,5 @@ So, have fun! :)
 
 Itch.io page: https://webguy88.itch.io/jimmybored
 Gamejolt page: https://gamejolt.com/games/jimmybored/516532
+
+![](./screenshot1.png)
