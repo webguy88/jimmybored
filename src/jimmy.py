@@ -9,10 +9,11 @@ from pyglet import text
 from random import randint
 
 # Resource-related
-resource.path = ['./resources']
+resource.path = ['../resources']
 resource.reindex()
 pyglet.options['debug_gl'] = False
 
+dark = resource.image('black.png')
 room_floor = resource.image('bg.png')
 dark_effect = resource.image('effect.png')
 bed_img = resource.image('bed.png')
@@ -49,6 +50,8 @@ fish = resource.image('fish.png')
 fisher_won = resource.image('fisher_won.png')
 fisher_lost = resource.image('fisher_lost.png')
 tv_effect = resource.image('tv_effect.png')
+
+black = sprite.Sprite(dark, x=0, y=0)
 
 low_E = resource.media('bass_low_E.wav', streaming=False)
 low_F = resource.media('bass_low_F.wav', streaming=False)
@@ -142,7 +145,9 @@ center_image(info)
 center_image(credits_back)
 center_image(fish)
 
+MENU = "menu"
 GAME = "game"
+FISHING = "fishing"
 MSG = "message"
 
 # GL stuff
@@ -396,12 +401,22 @@ class Fish():
 
 class Engine():
     def __init__(self, current_screen):
+        self.began = False
+        self.on_exit = False
+        self.opacity = 0
         self.mouse_X = 0
         self.mouse_Y = 0
         self.current_screen = current_screen
+        self.next_screen = current_screen
+        self.layer = MENU
 
     def draw(self):
         self.current_screen.draw()
+
+        if self.on_exit:
+            self.opacity += 20
+            black.opacity = min(self.opacity, 255)
+            black.draw()
 
     def on_click(self, x, y, button):
         self.current_screen.on_click(x, y, button)
@@ -417,8 +432,21 @@ class Engine():
         window.set_mouse_cursor(default_cur)
         self.current_screen.update(dt)
 
+        if self.opacity >= 255:
+            self.enter()
+
     def set_current_screen(self, current_screen):
-        self.current_screen = current_screen
+        self.current_screen = self.next_screen
+
+    def set_next_screen(self, next_screen):
+        clock.schedule_once(self.set_current_screen, 0.2)
+        self.next_screen = next_screen
+        self.on_exit = True
+
+    def enter(self):
+        self.current_screen.enter()
+        self.opacity = 0
+        self.on_exit = False
 
 
 class Screen():
@@ -435,6 +463,9 @@ class Screen():
         pass
 
     def update(self, dt):
+        pass
+
+    def enter(self):
         pass
 
 
@@ -481,11 +512,13 @@ class MainMenu(Screen):
         self.play_region = Region(self.button.x - self.button.width // 2,
                                   self.button.y - self.button.height // 2,
                                   234, 84)
-        self.info_button_region = Region(self.info_button.x - self.info_button.width // 2,
-                                         self.info_button.y - self.info_button.height // 2,
+        self.info_button_region = Region(self.info_button.x -
+                                         self.info_button.width // 2,
+                                         self.info_button.y -
+                                         self.info_button.height // 2,
                                          64, 64)
 
-        self.version_text = text.Label("v 1.0", x=608, y=40,
+        self.version_text = text.Label("v 2.0", x=608, y=40,
                                        anchor_x='center', anchor_y='center',
                                        font_size=16,
                                        color=(255, 255, 255, 255),
@@ -515,10 +548,11 @@ class MainMenu(Screen):
 
     def on_click(self, x, y, button):
         if self.play_region.contain(x, y):
-            engine.set_current_screen(bedroom)
+            engine.set_next_screen(bedroom)
+            engine.began = True
 
         if self.info_button_region.contain(x, y):
-            engine.set_current_screen(credit_screen)
+            engine.set_next_screen(credit_screen)
 
     def on_key_press(self, symbol, modifiers):
         pass
@@ -529,6 +563,16 @@ class MainMenu(Screen):
 
         if self.info_button_region.contain(engine.mouse_X, engine.mouse_Y):
             window.set_mouse_cursor(choose_cur)
+
+    def enter(self):
+        pass
+
+    def is_key_pressed(self):
+        for _k, v in keys.items():
+            if v:
+                return True
+
+        return False
 
 
 class Credit(Screen):
@@ -616,7 +660,7 @@ class Credit(Screen):
 
     def on_click(self, x, y, button):
         if self.back_region.contain(x, y):
-            engine.set_current_screen(main_menu)
+            engine.set_next_screen(main_menu)
 
         if self.go_left_region.contain(x, y) and self.page == 2:
             self.page = 1
@@ -635,9 +679,9 @@ class Credit(Screen):
            self.page == 2:
             window.set_mouse_cursor(choose_cur)
 
-        elif self.go_right_region.contain(engine.mouse_X, engine.mouse_Y) and \
-             self.page == 1:
-                window.set_mouse_cursor(choose_cur)
+        if self.go_right_region.contain(engine.mouse_X, engine.mouse_Y) and \
+           self.page == 1:
+            window.set_mouse_cursor(choose_cur)
 
 
 class Bedroom(Screen):
@@ -661,11 +705,14 @@ class Bedroom(Screen):
     popup_button_se = sprite.Sprite(popup_button_S, x=320, y=100)
 
     def __init__(self):
+        engine.layer = GAME
         self.obj_list = []
         self.layer = GAME
         self.mouse_over_button = False
-        self.popup_button_region = Region(self.popup_button_un.x - self.popup_button_un.width // 2,
-                                          self.popup_button_un.y - self.popup_button_un.height // 2,
+        self.popup_button_region = Region(self.popup_button_un.x -
+                                          self.popup_button_un.width // 2,
+                                          self.popup_button_un.y -
+                                          self.popup_button_un.height // 2,
                                           234, 84)
 
         # Texts
@@ -673,29 +720,28 @@ class Bedroom(Screen):
             """
                    That bed looks comfy,
             but you don't feel like sleeping
-            """
-                                   , x=280, y=160,
-                                   anchor_x='center', anchor_y='center',
-                                   font_size=24, color=(255, 255, 255, 255),
-                                   multiline=True, width=562, height=357)
+            """, x=280, y=160,
+            anchor_x='center', anchor_y='center',
+            font_size=24, color=(255, 255, 255, 255),
+            multiline=True, width=562, height=357)
 
         self.trash_text1 = text.Label(
             """
             You look deep into the trash...
                     You found a game!
             """, x=280, y=160,
-                 anchor_x='center', anchor_y='center',
-                 font_size=24, color=(255, 255, 255, 255),
-                 multiline=True, width=562, height=357
+            anchor_x='center', anchor_y='center',
+            font_size=24, color=(255, 255, 255, 255),
+            multiline=True, width=562, height=357
         )
 
         self.trash_text2 = text.Label(
             """
              You already looked in here...
             """, x=280, y=160,
-                 anchor_x='center', anchor_y='center',
-                 font_size=24, color=(255, 255, 255, 255),
-                 multiline=True, width=562, height=357
+            anchor_x='center', anchor_y='center',
+            font_size=24, color=(255, 255, 255, 255),
+            multiline=True, width=562, height=357
         )
 
         self.game_text1 = text.Label(
@@ -704,9 +750,9 @@ class Bedroom(Screen):
                          for a game...
 
             """, x=280, y=140,
-                 anchor_x='center', anchor_y='center',
-                 font_size=24, color=(255, 255, 255, 255),
-                 multiline=True, width=562, height=357
+            anchor_x='center', anchor_y='center',
+            font_size=24, color=(255, 255, 255, 255),
+            multiline=True, width=562, height=357
         )
 
         self.game_text2 = text.Label(
@@ -714,9 +760,9 @@ class Bedroom(Screen):
             Looks like you have a game!
               Do you want to play it?
             """, x=280, y=140,
-                 anchor_x='center', anchor_y='center',
-                 font_size=24, color=(255, 255, 255, 255),
-                 multiline=True, width=562, height=357
+            anchor_x='center', anchor_y='center',
+            font_size=24, color=(255, 255, 255, 255),
+            multiline=True, width=562, height=357
         )
 
         self.message = None
@@ -763,7 +809,7 @@ class Bedroom(Screen):
 
             if self.popup_button_region.contain(x, y) and \
                self.message == self.game_text2:
-                engine.set_current_screen(fishing_game)
+                engine.set_next_screen(fishing_game)
 
     def on_key_press(self, symbol, modifiers):
         if self.layer == GAME:
@@ -781,115 +827,65 @@ class Bedroom(Screen):
                 self.layer = MSG
                 self.message = self.trash_text1
 
-            elif player.is_over_trash and symbol == key.SPACE \
-                 and player.has_game:
+            if player.is_over_trash and symbol == key.SPACE \
+               and player.has_game:
                 select.play()
                 self.layer = MSG
                 self.message = self.trash_text2
 
             if player.is_over_desktop and symbol == key.SPACE \
                and not player.has_game:
-                 select.play()
-                 self.layer = MSG
-                 self.message = self.game_text1
+                select.play()
+                self.layer = MSG
+                self.message = self.game_text1
 
             if player.is_over_desktop and symbol == key.SPACE \
                and player.has_game:
-                 select.play()
-                 self.layer = MSG
-                 self.message = self.game_text2
+                select.play()
+                self.layer = MSG
+                self.message = self.game_text2
 
             if symbol == key.R:
-                engine.set_current_screen(main_menu)
+                engine.set_next_screen(main_menu)
 
     def update(self, dt):
 
-        # PLAYER MOVEMENT & BEHAVIOUR
+        # Outlining
+        if player.hitbox.collides(outline_bass.hitbox):
+            outline_bass.visible = True
+            player.is_over_bass = True
+        else:
+            outline_bass.visible = False
+            player.is_over_bass = False
 
-        if self.layer == GAME:
+        if player.hitbox.collides(outline_bed.hitbox):
+            outline_bed.visible = True
+            player.is_over_bed = True
+        else:
+            outline_bed.visible = False
+            player.is_over_bed = False
 
-            # Normal movement
-            if keys[key.W]:
-                player.change_direction(0, 0, 170)
-                player.walking = True
+        if player.hitbox.collides(outline_trash.hitbox):
+            outline_trash.visible = True
+            player.is_over_trash = True
+        else:
+            outline_trash.visible = False
+            player.is_over_trash = False
 
-            if keys[key.A]:
-                player.change_direction(1, -170, 0)
-                player.walking = True
+        if player.hitbox.collides(outline_desktop.hitbox):
+            outline_desktop.visible = True
+            player.is_over_desktop = True
+        else:
+            outline_desktop.visible = False
+            player.is_over_desktop = False
 
-            if keys[key.S]:
-                player.change_direction(1, 0, -170)
-                player.walking = True
-
-            if keys[key.D]:
-                player.change_direction(0, 170, 0)
-                player.walking = True
-
-            # Diagonal implementation
-            if keys[key.W] and keys[key.A]:
-                player.change_direction(1, -160, 160)
-                player.walking = True
-
-            if keys[key.W] and keys[key.D]:
-                player.change_direction(0, 160, 160)
-                player.walking = True
-
-            if keys[key.S] and keys[key.A]:
-                player.change_direction(1, -160, -160)
-                player.walking = True
-            
-            if keys[key.S] and keys[key.D]:
-                player.change_direction(0, 160, -160)
-                player.walking = True
-
-            # Cancel two keys at the same time
-            if keys[key.W] and keys[key.S]:
-                player.change_direction(player.direction, 0, 0)
-                player.walking = False
-
-            if keys[key.A] and keys[key.D]:
-                player.change_direction(player.direction, 0, 0)
-                player.walking = False
-
-            if not self.is_key_pressed():
-                player.change_direction(player.direction, 0, 0)
-                player.walking = False
-
-            # Outlining
-            if player.hitbox.collides(outline_bass.hitbox):
-                outline_bass.visible = True
-                player.is_over_bass = True
-            else:
-                outline_bass.visible = False
-                player.is_over_bass = False
-
-            if player.hitbox.collides(outline_bed.hitbox):
-                outline_bed.visible = True
-                player.is_over_bed = True
-            else:
-                outline_bed.visible = False
-                player.is_over_bed = False
-
-            if player.hitbox.collides(outline_trash.hitbox):
-                outline_trash.visible = True
-                player.is_over_trash = True
-            else:
-                outline_trash.visible = False
-                player.is_over_trash = False
-
-            if player.hitbox.collides(outline_desktop.hitbox):
-                outline_desktop.visible = True
-                player.is_over_desktop = True
-            else:
-                outline_desktop.visible = False
-                player.is_over_desktop = False
-            
         # ~~~~~~~~~~~~~~
 
         # POPUPS RELATED
-        elif self.layer == MSG:
-    
-            if self.popup_button_region.contain(engine.mouse_X, engine.mouse_Y):
+        if self.layer == MSG:
+
+            if self.popup_button_region.contain(engine.mouse_X,
+                                                engine.mouse_Y):
                 self.mouse_over_button = True
                 window.set_mouse_cursor(choose_cur)
             else:
@@ -899,7 +895,7 @@ class Bedroom(Screen):
         for _k, v in keys.items():
             if v:
                 return True
-        
+
         return False
 
 
@@ -933,20 +929,29 @@ class FishingGame(Screen):
 
         self.goal_text = text.Label("""Your goal is to catch at least 10 fish
 before the time runs out.""",
-                                    x=320, y=430, anchor_x='center', anchor_y='center',
-                                    font_size=14, color=(255, 255, 255, 255), bold=True)
-                                    
-        self.timer_text = text.Label(f"{self.timer}", x=320, y=380, anchor_x='center',
-                                     anchor_y='center', font_size=24, color=(255, 255, 255, 255),
-                                     bold=True)
-
-        self.fish_text = text.Label(f"{self.fish_count}", x=570, y=380, anchor_x='center',
-                                    anchor_y='center', font_size=24, color=(255, 255, 255, 255),
+                                    x=320, y=430, anchor_x='center',
+                                    anchor_y='center',
+                                    font_size=14, color=(255, 255, 255, 255),
                                     bold=True)
 
-        self.reminder_text = text.Label("Remember to hold the fish for enough time before catching!",
-                                        x=320, y=400, anchor_x='center', anchor_y='center',
-                                        font_size=14, color=(255, 255, 255, 255), bold=True)
+        self.timer_text = text.Label(f"{self.timer}", x=320, y=380,
+                                     anchor_x='center',
+                                     anchor_y='center', font_size=24,
+                                     color=(255, 255, 255, 255),
+                                     bold=True)
+
+        self.fish_text = text.Label(f"{self.fish_count}", x=570, y=380,
+                                    anchor_x='center',
+                                    anchor_y='center', font_size=24,
+                                    color=(255, 255, 255, 255),
+                                    bold=True)
+
+        self.reminder_text = text.Label("""Remember to hold the fish for
+                                        enough time before catching!""",
+                                        x=320, y=400, anchor_x='center',
+                                        anchor_y='center',
+                                        font_size=14,
+                                        color=(255, 255, 255, 255), bold=True)
 
         self.fishing_rod_region = Region(player.fisherman.x - 10,
                                          player.fisherman.y - 1,
@@ -969,7 +974,6 @@ before the time runs out.""",
             self.fish_display.draw()
             fish_music.play()
             player.draw()
-            #self.fishing_rod_region.draw()
 
         if self.game_finished and not self.won:
             self.lose_display.draw()
@@ -978,7 +982,7 @@ before the time runs out.""",
             self.win_display.draw()
 
         for obj in self.obj_list:
-            if obj.sprite != None and obj.visible:
+            if obj.sprite is not None and obj.visible:
                 obj.sprite.draw()
 
         for enemy in self.enemies:
@@ -1005,7 +1009,7 @@ before the time runs out.""",
         if symbol == key.BACKSPACE and not self.has_game_started:
             player.x = 320
             player.y = 148
-            engine.set_current_screen(bedroom)
+            engine.set_next_screen(bedroom)
 
         if symbol == key.SPACE and self.caught_something and \
            self.holding_fish >= 10 and not self.game_finished:
@@ -1020,10 +1024,11 @@ before the time runs out.""",
         elif symbol == key.BACKSPACE and self.game_finished:
             player.x = 320
             player.y = 148
-            engine.set_current_screen(bedroom)
+            engine.set_next_screen(bedroom)
 
     def update(self, dt):
-        if self.has_game_started:
+        if self.has_game_started and \
+           engine.layer == FISHING:
 
             for enemy in self.enemies:
                 enemy.update(dt)
@@ -1052,7 +1057,7 @@ before the time runs out.""",
                 fish_music.pause()
                 fisher_win.play()
                 self.won = True
-        
+
         self.update_text()
 
     def fish_timer(self, dt):
@@ -1078,16 +1083,20 @@ before the time runs out.""",
         for _k, v in keys.items():
             if v:
                 return True
-        
+
         return False
 
     def update_text(self):
-        self.timer_text = text.Label(f"{self.timer}", x=320, y=360, anchor_x='center',
-                                     anchor_y='center', font_size=24, color=(255, 255, 255, 255),
+        self.timer_text = text.Label(f"{self.timer}", x=320, y=360,
+                                     anchor_x='center',
+                                     anchor_y='center', font_size=24,
+                                     color=(255, 255, 255, 255),
                                      bold=True)
 
-        self.fish_text = text.Label(f"{self.fish_count}", x=570, y=360, anchor_x='center',
-                                    anchor_y='center', font_size=24, color=(255, 255, 255, 255),
+        self.fish_text = text.Label(f"{self.fish_count}", x=570, y=360,
+                                    anchor_x='center',
+                                    anchor_y='center', font_size=24,
+                                    color=(255, 255, 255, 255),
                                     bold=True)
 
         if self.fish_count > 9:
@@ -1117,27 +1126,53 @@ player = Player()
 fish = Fish()
 
 # Bedroom objects
-wall = SceneObject(id=0, solid=True, name="wall", x=320, y=372, sprite=Bedroom.wall_spr)
-bed = SceneObject(id=1, solid=True, name="bed", x=80, y=240, sprite=Bedroom.bed_spr)
-boundary_down = SceneObject(id=2, solid=True, name="b_bottom", x=320, y=0, width=SCREENW, height=1)
-boundary_left = SceneObject(id=3, solid=True, name="b_left", x=0, y=0, width=1, height=SCREENH)
-boundary_right = SceneObject(id=4, solid=True, name="b_right", x=639, y=0, width=1, height=SCREENH)
-body_bass = SceneObject(id=5, solid=True, name="bass_body", x=260, y=235, sprite=Bedroom.b_body_spr)
-outline_bass = SceneObject(id=6, solid=False, name="bass_outline", x=260, y=285, width=87, height=205, sprite=Bedroom.b_outline, visible=False)
-outline_bed = SceneObject(id=7, solid=False, name="bed_outline", x=80, y=240, sprite=Bedroom.bd_outline, visible=False)
-trash = SceneObject(id=8, solid=True, name="trash_can", x=580, y=50, sprite=Bedroom.trash)
-outline_trash = SceneObject(id=9, solid=False, name="trash_outline", x=580, y=50, width=80, height=80, sprite=Bedroom.tr_outline, visible=False)
-desktop = SceneObject(id=10, solid=True, name="desktop", x=480, y=255, sprite=Bedroom.desk_spr)
-outline_desktop = SceneObject(id=11, solid=False, name="desktop_outline", x=480, y=255, width=190, height=125, sprite=Bedroom.desk_out, visible=False)
+wall = SceneObject(id=0, solid=True, name="wall", x=320, y=372,
+                   sprite=Bedroom.wall_spr)
+
+bed = SceneObject(id=1, solid=True, name="bed", x=80, y=240,
+                  sprite=Bedroom.bed_spr)
+
+boundary_down = SceneObject(id=2, solid=True, name="b_bottom", x=320, y=0,
+                            width=SCREENW, height=1)
+
+boundary_left = SceneObject(id=3, solid=True, name="b_left", x=0, y=0, width=1,
+                            height=SCREENH)
+
+boundary_right = SceneObject(id=4, solid=True, name="b_right", x=639, y=0,
+                             width=1, height=SCREENH)
+
+body_bass = SceneObject(id=5, solid=True, name="bass_body", x=260, y=235,
+                        sprite=Bedroom.b_body_spr)
+
+outline_bass = SceneObject(id=6, solid=False, name="bass_outline", x=260,
+                           y=285, width=87, height=205,
+                           sprite=Bedroom.b_outline, visible=False)
+
+outline_bed = SceneObject(id=7, solid=False, name="bed_outline", x=80, y=240,
+                          sprite=Bedroom.bd_outline, visible=False)
+
+trash = SceneObject(id=8, solid=True, name="trash_can", x=580, y=50,
+                    sprite=Bedroom.trash)
+
+outline_trash = SceneObject(id=9, solid=False, name="trash_outline", x=580,
+                            y=50, width=80, height=80,
+                            sprite=Bedroom.tr_outline, visible=False)
+
+desktop = SceneObject(id=10, solid=True, name="desktop", x=480, y=255,
+                      sprite=Bedroom.desk_spr)
+
+outline_desktop = SceneObject(id=11, solid=False, name="desktop_outline",
+                              x=480, y=255, width=190, height=125,
+                              sprite=Bedroom.desk_out, visible=False)
 
 # Fishing game objects
 ...
 
 main_menu = MainMenu()
 credit_screen = Credit()
+engine = Engine(main_menu)
 bedroom = Bedroom()
 fishing_game = FishingGame()
-engine = Engine(main_menu)
 
 # Add all the scene objects
 main_menu.obj_list.append(bed)  # Main menu
@@ -1195,6 +1230,56 @@ def on_key_press(symbol, modifiers):
 def update(dt):
     engine.update(dt)
     player.update(dt)
+
+    if engine.began:
+        if engine.layer == GAME:
+
+            # Normal movement
+            if keys[key.W]:
+                player.change_direction(0, 0, 170)
+                player.walking = True
+
+            if keys[key.A]:
+                player.change_direction(1, -170, 0)
+                player.walking = True
+
+            if keys[key.S]:
+                player.change_direction(1, 0, -170)
+                player.walking = True
+
+            if keys[key.D]:
+                player.change_direction(0, 170, 0)
+                player.walking = True
+
+            # Diagonal implementation
+            if keys[key.W] and keys[key.A]:
+                player.change_direction(1, -160, 160)
+                player.walking = True
+
+            if keys[key.W] and keys[key.D]:
+                player.change_direction(0, 160, 160)
+                player.walking = True
+
+            if keys[key.S] and keys[key.A]:
+                player.change_direction(1, -160, -160)
+                player.walking = True
+
+            if keys[key.S] and keys[key.D]:
+                player.change_direction(0, 160, -160)
+                player.walking = True
+
+            # Cancel two keys at the same time
+            if keys[key.W] and keys[key.S]:
+                player.change_direction(player.direction, 0, 0)
+                player.walking = False
+
+            if keys[key.A] and keys[key.D]:
+                player.change_direction(player.direction, 0, 0)
+                player.walking = False
+
+            if not engine.current_screen.is_key_pressed():
+                player.change_direction(player.direction, 0, 0)
+                player.walking = False
 
 
 @window.event
