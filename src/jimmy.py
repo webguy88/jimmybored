@@ -51,6 +51,13 @@ fisher_won = resource.image('fisher_won.png')
 fisher_lost = resource.image('fisher_lost.png')
 tv_effect = resource.image('tv_effect.png')
 
+stamina_meter = resource.image('stamina_meter.png')
+stamina0 = resource.image('stamina0.png')
+stamina1 = resource.image('stamina1.png')
+stamina2 = resource.image('stamina2.png')
+stamina3 = resource.image('stamina3.png')
+stamina4 = resource.image('stamina4.png')
+
 black = sprite.Sprite(dark, x=0, y=0)
 
 low_E = resource.media('bass_low_E.wav', streaming=False)
@@ -271,6 +278,7 @@ class Player():
         self.vy = 0
         self.direction = 1
         self.walking = False
+        self.stamina = 5
         self.jimmy_idle = sprite.Sprite(self.images_idle[0])
         self.jimmy_walk_r = sprite.Sprite(self.jimmy_right)
         self.jimmy_walk_l = sprite.Sprite(self.jimmy_left)
@@ -408,10 +416,17 @@ class Engine():
         self.mouse_Y = 0
         self.current_screen = current_screen
         self.next_screen = current_screen
+        self.hud = Hud()
         self.layer = MENU
+
+        if self.layer is not MENU:
+            self.began = False
 
     def draw(self):
         self.current_screen.draw()
+
+        if self.layer is not MENU:
+            self.hud.draw()
 
         if self.on_exit:
             self.opacity += 20
@@ -419,6 +434,7 @@ class Engine():
             black.draw()
 
     def on_click(self, x, y, button):
+        print(self.layer, self.began)
         self.current_screen.on_click(x, y, button)
 
     def mouse_XY(self, x, y, dx, dy):
@@ -447,6 +463,31 @@ class Engine():
         self.current_screen.enter()
         self.opacity = 0
         self.on_exit = False
+
+
+class Hud:
+    stamina_display = None
+    stamina_0 = sprite.Sprite(stamina0, x=20, y=390)
+    stamina_1 = sprite.Sprite(stamina1, x=20, y=390)
+    stamina_2 = sprite.Sprite(stamina2, x=20, y=390)
+    stamina_3 = sprite.Sprite(stamina3, x=20, y=390)
+    stamina_4 = sprite.Sprite(stamina4, x=20, y=390)
+
+    def __init__(self):
+        print(player.stamina)
+        if player.stamina == 5:
+            self.stamina_display = self.stamina_4
+        if player.stamina == 4:
+            self.stamina_display = self.stamina_3
+        if player.stamina == 3:
+            self.stamina_display = self.stamina_2
+        if player.stamina == 2:
+            self.stamina_display = self.stamina_1
+        if player.stamina == 1:
+            self.stamina_display = self.stamina_0
+
+    def draw(self):
+        self.stamina_display.draw()
 
 
 class Screen():
@@ -548,6 +589,7 @@ class MainMenu(Screen):
 
     def on_click(self, x, y, button):
         if self.play_region.contain(x, y):
+            engine.layer = GAME
             engine.set_next_screen(bedroom)
             engine.began = True
 
@@ -707,7 +749,6 @@ class Bedroom(Screen):
     def __init__(self):
         engine.layer = GAME
         self.obj_list = []
-        self.layer = GAME
         self.mouse_over_button = False
         self.popup_button_region = Region(self.popup_button_un.x -
                                           self.popup_button_un.width // 2,
@@ -781,7 +822,7 @@ class Bedroom(Screen):
         if player.has_game:
             self.disc.draw()
 
-        if self.layer == MSG:
+        if engine.layer == MSG:
             self.popup.draw()
             self.message.draw()
 
@@ -797,14 +838,14 @@ class Bedroom(Screen):
         ...
 
     def on_click(self, x, y, button):
-        if self.layer == MSG:
+        if engine.layer == MSG:
 
             if self.popup_button_region.contain(x, y):
-                self.layer = GAME
+                engine.layer = GAME
 
             if self.popup_button_region.contain(x, y) and \
                self.message == self.trash_text1:
-                self.layer = GAME
+                engine.layer = GAME
                 player.has_game = True
 
             if self.popup_button_region.contain(x, y) and \
@@ -812,40 +853,42 @@ class Bedroom(Screen):
                 engine.set_next_screen(fishing_game)
 
     def on_key_press(self, symbol, modifiers):
-        if self.layer == GAME:
+        if engine.layer == GAME:
             if player.is_over_bass and symbol == key.SPACE:
                 bass_notes[randint(0, 12)].play()
 
             if player.is_over_bed and symbol == key.SPACE:
                 select.play()
-                self.layer = MSG
+                engine.layer = MSG
                 self.message = self.bed_text
 
             if player.is_over_trash and symbol == key.SPACE \
                and not player.has_game:
                 select.play()
-                self.layer = MSG
+                engine.layer = MSG
                 self.message = self.trash_text1
 
             if player.is_over_trash and symbol == key.SPACE \
                and player.has_game:
                 select.play()
-                self.layer = MSG
+                engine.layer = MSG
                 self.message = self.trash_text2
 
             if player.is_over_desktop and symbol == key.SPACE \
                and not player.has_game:
                 select.play()
-                self.layer = MSG
+                engine.layer = MSG
                 self.message = self.game_text1
 
             if player.is_over_desktop and symbol == key.SPACE \
                and player.has_game:
                 select.play()
-                self.layer = MSG
+                engine.layer = MSG
                 self.message = self.game_text2
 
             if symbol == key.R:
+                engine.began = False
+                engine.layer = MENU
                 engine.set_next_screen(main_menu)
 
     def update(self, dt):
@@ -882,7 +925,7 @@ class Bedroom(Screen):
         # ~~~~~~~~~~~~~~
 
         # POPUPS RELATED
-        if self.layer == MSG:
+        if engine.layer == MSG:
 
             if self.popup_button_region.contain(engine.mouse_X,
                                                 engine.mouse_Y):
