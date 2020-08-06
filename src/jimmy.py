@@ -425,7 +425,8 @@ class Engine():
     def draw(self):
         self.current_screen.draw()
 
-        if self.layer is not MENU:
+        if self.layer is not MENU and \
+           self.layer is not FISHING:
             self.hud.draw()
 
         if self.on_exit:
@@ -850,6 +851,7 @@ class Bedroom(Screen):
 
             if self.popup_button_region.contain(x, y) and \
                self.message == self.game_text2:
+                engine.layer = FISHING
                 engine.set_next_screen(fishing_game)
 
     def on_key_press(self, symbol, modifiers):
@@ -990,7 +992,7 @@ before the time runs out.""",
                                     bold=True)
 
         self.reminder_text = text.Label("""Remember to hold the fish for
-                                        enough time before catching!""",
+enough time before catching!""",
                                         x=320, y=400, anchor_x='center',
                                         anchor_y='center',
                                         font_size=14,
@@ -1052,6 +1054,7 @@ before the time runs out.""",
         if symbol == key.BACKSPACE and not self.has_game_started:
             player.x = 320
             player.y = 148
+            engine.layer = GAME
             engine.set_next_screen(bedroom)
 
         if symbol == key.SPACE and self.caught_something and \
@@ -1067,6 +1070,7 @@ before the time runs out.""",
         elif symbol == key.BACKSPACE and self.game_finished:
             player.x = 320
             player.y = 148
+            engine.layer = GAME
             engine.set_next_screen(bedroom)
 
     def update(self, dt):
