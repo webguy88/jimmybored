@@ -152,6 +152,7 @@ center_image(info)
 center_image(credits_back)
 center_image(fish)
 
+SPLASH = "splash"
 MENU = "menu"
 GAME = "game"
 FISHING = "fishing"
@@ -278,7 +279,9 @@ class Player():
         self.vy = 0
         self.direction = 1
         self.walking = False
-        self.stamina = 5
+        self.stamina = 1
+        self.is_sleeping = False
+
         self.jimmy_idle = sprite.Sprite(self.images_idle[0])
         self.jimmy_walk_r = sprite.Sprite(self.jimmy_right)
         self.jimmy_walk_l = sprite.Sprite(self.jimmy_left)
@@ -286,11 +289,12 @@ class Player():
         self.fisherman_grab = sprite.Sprite(self.fisher_grab)
         self.sprite = self.jimmy_walk_r
         self.hitbox = Region(self.x, self.y, 40, 70)
+
         self.is_over_bass = False
         self.is_over_bed = False
         self.is_over_trash = False
         self.is_over_desktop = False
-        self.has_game = False
+        self.has_game_fish = False
 
     def draw(self):
         self.sprite.draw()
@@ -417,18 +421,15 @@ class Engine():
         self.current_screen = current_screen
         self.next_screen = current_screen
         self.hud = Hud()
-        self.layer = MENU
+        self.layer = SPLASH
 
-        if self.layer is not MENU:
+        if self.layer is not MENU and \
+           self.layer is not SPLASH:
             self.began = False
 
     def draw(self):
         self.current_screen.draw()
-
-        if self.layer is not MENU and \
-           self.layer is not FISHING:
-            self.hud.draw()
-
+        self.hud.draw()
         if self.on_exit:
             self.opacity += 20
             black.opacity = min(self.opacity, 255)
@@ -488,7 +489,8 @@ class Hud:
             self.stamina_display = self.stamina_0
 
     def draw(self):
-        self.stamina_display.draw()
+        if engine.current_screen in [bedroom]:
+            self.stamina_display.draw()
 
 
 class Screen():
@@ -539,6 +541,26 @@ class SceneObject():
                                  self.y - self.height // 2,
                                  self.width,
                                  self.height)
+
+
+class SplashScreen(Screen):
+    def __init__(self):
+        self.obj_list = []
+        self.count = 0
+        self.text = text.Label("webguy88 presents...", x=320, y=240,
+                               anchor_x='center', anchor_y='center',
+                               font_size=24, bold=True,
+                               color=(255, 255, 255, 255))
+
+    def draw(self):
+        self.text.draw()
+
+    def update(self, dt):
+        self.count += 0.5
+
+        if self.count >= 30:
+            engine.set_next_screen(main_menu)
+            engine.layer = MENU
 
 
 class MainMenu(Screen):
@@ -820,7 +842,7 @@ class Bedroom(Screen):
         self.b_neck_spr.draw()
         self.effect.draw()
 
-        if player.has_game:
+        if player.has_game_fish:
             self.disc.draw()
 
         if engine.layer == MSG:
@@ -847,7 +869,7 @@ class Bedroom(Screen):
             if self.popup_button_region.contain(x, y) and \
                self.message == self.trash_text1:
                 engine.layer = GAME
-                player.has_game = True
+                player.has_game_fish = True
 
             if self.popup_button_region.contain(x, y) and \
                self.message == self.game_text2:
@@ -855,35 +877,44 @@ class Bedroom(Screen):
                 engine.set_next_screen(fishing_game)
 
     def on_key_press(self, symbol, modifiers):
-        if engine.layer == GAME:
+        if engine.layer == GAME and \
+           engine.current_screen == bedroom:
             if player.is_over_bass and symbol == key.SPACE:
                 bass_notes[randint(0, 12)].play()
 
-            if player.is_over_bed and symbol == key.SPACE:
+            if player.is_over_bed and symbol == key.SPACE and \
+               player.stamina > 1:
                 select.play()
                 engine.layer = MSG
                 self.message = self.bed_text
 
+            elif (
+                player.is_over_bed
+                and symbol == key.SPACE
+                and player.stamina <= 1
+            ):
+                engine.on_exit = True
+
             if player.is_over_trash and symbol == key.SPACE \
-               and not player.has_game:
+               and not player.has_game_fish:
                 select.play()
                 engine.layer = MSG
                 self.message = self.trash_text1
 
             if player.is_over_trash and symbol == key.SPACE \
-               and player.has_game:
+               and player.has_game_fish:
                 select.play()
                 engine.layer = MSG
                 self.message = self.trash_text2
 
             if player.is_over_desktop and symbol == key.SPACE \
-               and not player.has_game:
+               and not player.has_game_fish:
                 select.play()
                 engine.layer = MSG
                 self.message = self.game_text1
 
             if player.is_over_desktop and symbol == key.SPACE \
-               and player.has_game:
+               and player.has_game_fish:
                 select.play()
                 engine.layer = MSG
                 self.message = self.game_text2
@@ -1215,9 +1246,10 @@ outline_desktop = SceneObject(id=11, solid=False, name="desktop_outline",
 # Fishing game objects
 ...
 
+splash_screen = SplashScreen()
 main_menu = MainMenu()
 credit_screen = Credit()
-engine = Engine(main_menu)
+engine = Engine(splash_screen)
 bedroom = Bedroom()
 fishing_game = FishingGame()
 
