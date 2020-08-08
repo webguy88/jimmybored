@@ -279,7 +279,7 @@ class Player():
         self.vy = 0
         self.direction = 1
         self.walking = False
-        self.stamina = 1
+        self.stamina = 5
         self.is_sleeping = False
 
         self.jimmy_idle = sprite.Sprite(self.images_idle[0])
@@ -355,6 +355,11 @@ class Player():
 
         # Update region
         self.hitbox = new_hitbox
+
+    def stamina_drain(self, dt):
+        print(self.stamina)
+        if self.stamina > 0:
+            self.stamina -= 1
 
     def change_direction(self, direction, vx, vy):
 
@@ -436,7 +441,6 @@ class Engine():
             black.draw()
 
     def on_click(self, x, y, button):
-        print(self.layer, self.began)
         self.current_screen.on_click(x, y, button)
 
     def mouse_XY(self, x, y, dx, dy):
@@ -449,6 +453,7 @@ class Engine():
     def update(self, dt):
         window.set_mouse_cursor(default_cur)
         self.current_screen.update(dt)
+        self.hud.update(dt)
 
         if self.opacity >= 255:
             self.enter()
@@ -476,16 +481,20 @@ class Hud:
     stamina_4 = sprite.Sprite(stamina4, x=20, y=390)
 
     def __init__(self):
-        print(player.stamina)
+        pass
+
+    def update(self, dt):
         if player.stamina == 5:
             self.stamina_display = self.stamina_4
         if player.stamina == 4:
-            self.stamina_display = self.stamina_3
+            self.stamina_display = self.stamina_4
         if player.stamina == 3:
-            self.stamina_display = self.stamina_2
+            self.stamina_display = self.stamina_3
         if player.stamina == 2:
-            self.stamina_display = self.stamina_1
+            self.stamina_display = self.stamina_2
         if player.stamina == 1:
+            self.stamina_display = self.stamina_1
+        if player.stamina == 0:
             self.stamina_display = self.stamina_0
 
     def draw(self):
@@ -1310,55 +1319,53 @@ def update(dt):
     engine.update(dt)
     player.update(dt)
 
-    if engine.began:
-        if engine.layer == GAME:
+    if engine.began and engine.layer == GAME:
+        # Normal movement
+        if keys[key.W]:
+            player.change_direction(0, 0, 170)
+            player.walking = True
 
-            # Normal movement
-            if keys[key.W]:
-                player.change_direction(0, 0, 170)
-                player.walking = True
+        if keys[key.A]:
+            player.change_direction(1, -170, 0)
+            player.walking = True
 
-            if keys[key.A]:
-                player.change_direction(1, -170, 0)
-                player.walking = True
+        if keys[key.S]:
+            player.change_direction(1, 0, -170)
+            player.walking = True
 
-            if keys[key.S]:
-                player.change_direction(1, 0, -170)
-                player.walking = True
+        if keys[key.D]:
+            player.change_direction(0, 170, 0)
+            player.walking = True
 
-            if keys[key.D]:
-                player.change_direction(0, 170, 0)
-                player.walking = True
+        # Diagonal implementation
+        if keys[key.W] and keys[key.A]:
+            player.change_direction(1, -160, 160)
+            player.walking = True
 
-            # Diagonal implementation
-            if keys[key.W] and keys[key.A]:
-                player.change_direction(1, -160, 160)
-                player.walking = True
+        if keys[key.W] and keys[key.D]:
+            player.change_direction(0, 160, 160)
+            player.walking = True
 
-            if keys[key.W] and keys[key.D]:
-                player.change_direction(0, 160, 160)
-                player.walking = True
+        if keys[key.S] and keys[key.A]:
+            player.change_direction(1, -160, -160)
+            player.walking = True
 
-            if keys[key.S] and keys[key.A]:
-                player.change_direction(1, -160, -160)
-                player.walking = True
+        if keys[key.S] and keys[key.D]:
+            player.change_direction(0, 160, -160)
+            player.walking = True
 
-            if keys[key.S] and keys[key.D]:
-                player.change_direction(0, 160, -160)
-                player.walking = True
+        # Cancel two keys at the same time
+        if keys[key.W] and keys[key.S]:
+            player.change_direction(player.direction, 0, 0)
+            player.walking = False
 
-            # Cancel two keys at the same time
-            if keys[key.W] and keys[key.S]:
-                player.change_direction(player.direction, 0, 0)
-                player.walking = False
+        if keys[key.A] and keys[key.D]:
+            player.change_direction(player.direction, 0, 0)
+            player.walking = False
 
-            if keys[key.A] and keys[key.D]:
-                player.change_direction(player.direction, 0, 0)
-                player.walking = False
-
-            if not engine.current_screen.is_key_pressed():
-                player.change_direction(player.direction, 0, 0)
-                player.walking = False
+        if not engine.current_screen.is_key_pressed():
+            player.change_direction(player.direction, 0, 0)
+            player.walking = False
 
 
 @window.event
@@ -1371,9 +1378,18 @@ def fish_spawner(dt):
     fishing_game.fish_spawner(dt)
 
 
+@window.event
+def stamina_drain(dt):
+    if engine.layer == GAME and \
+       engine.began and \
+       player.stamina >= 1:
+        player.stamina_drain(dt)
+
+
 keys = key.KeyStateHandler()
 window.push_handlers(keys)
 
 clock.schedule_interval(update, 1/30)
+clock.schedule_interval(stamina_drain, 1)
 
 pyglet.app.run()
