@@ -111,9 +111,11 @@ bass_notes = [
 SCREENW = 640
 SCREENH = 480
 FULLSCREEN = False
+RESIZE = True
 
 window = pyglet.window.Window(SCREENW, SCREENH, caption="Jimmy is bored",
-                              fullscreen=FULLSCREEN)
+                              fullscreen=FULLSCREEN, resizable=RESIZE)
+target_resolution = 640, 480
 
 default_cur = window.get_system_mouse_cursor(window.CURSOR_DEFAULT)
 choose_cur = window.get_system_mouse_cursor(window.CURSOR_HAND)
@@ -161,6 +163,90 @@ MSG = "message"
 # GL stuff
 gl.glEnable(gl.GL_BLEND)
 gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
+
+
+class FixedResolution:
+    def __init__(self, window, width, height, filtered=False):
+        self.window = window
+        self.width = width
+        self.height = height
+        self.filtered = filtered
+        self._viewport = 0, 0, 0, 0, 0
+        self._calculate_viewport(self.window.width, self.window.height)
+        self.cam_x = 0
+        self.cam_y = 0
+
+        self.texture = pyglet.image.Texture.create(width, height,
+                                                   rectangle=True)
+
+        if not filtered:
+            pyglet.image.Texture.default_min_filter = gl.GL_NEAREST
+            pyglet.image.Texture.default_mag_filter = gl.GL_NEAREST
+            gl.glTexParameteri(self.texture.target, gl.GL_TEXTURE_MAG_FILTER,
+                               gl.GL_NEAREST)
+            gl.glTexParameteri(self.texture.target, gl.GL_TEXTURE_MIN_FILTER,
+                               gl.GL_NEAREST)
+
+        def on_resize(w, h):
+            self._calculate_viewport(w, h)
+            self.window_w, self.window_h = w, h
+
+        self.window.on_resize = on_resize
+
+    def _calculate_viewport(self, new_screen_width, new_screen_height):
+        aspect_ratio = self.width / self.height
+        aspect_width = new_screen_width
+        aspect_height = aspect_width / aspect_ratio + 0.5
+        if aspect_height > new_screen_height:
+            aspect_height = new_screen_height
+            aspect_width = aspect_height * aspect_ratio + 0.5
+
+        if not self.filtered:
+            gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER,
+                               gl.GL_NEAREST)
+            gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER,
+                               gl.GL_NEAREST)
+
+        self._viewport = (int((new_screen_width / 2) - (aspect_width / 2)),
+                          int((new_screen_height / 2) - (aspect_height / 2)),
+                          0,
+                          int(aspect_width),
+                          int(aspect_height))
+
+    def __enter__(self):
+        gl.glViewport(0, 0, self.width, self.height)
+        gl.glMatrixMode(gl.GL_PROJECTION)
+        gl.glLoadIdentity()
+        gl.glOrtho(0, self.width, 0, self.height, -255, 255)
+        gl.glMatrixMode(gl.GL_MODELVIEW)
+        gl.glTranslatef(self.cam_x, self.cam_y, 0)
+
+    def set_camera(self, x=0, y=0):
+        self.cam_x = -x
+        self.cam_y = -y
+
+    def __exit__(self, *unused):
+        window = self.window
+        buffer = pyglet.image.get_buffer_manager().get_color_buffer()
+        self.texture.blit_into(buffer, 0, 0, 0)
+
+        gl.glViewport(0, 0, window.width, window.height)
+        gl.glMatrixMode(gl.GL_PROJECTION)
+        gl.glLoadIdentity()
+        gl.glOrtho(0, window.width, 0, window.height, -1, 1)
+        gl.glMatrixMode(gl.GL_MODELVIEW)
+
+        gl.glClearColor(0, 0, 0, 1)
+        gl.glClear(gl.GL_COLOR_BUFFER_BIT)
+        gl.glLoadIdentity()
+
+        self.texture.blit(*self._viewport)
+
+    def begin(self):
+        self.__enter__()
+
+    def end(self):
+        self.__exit__()
 
 
 class Rect:
@@ -417,6 +503,7 @@ class Fish():
 
 
 class Engine():
+
     def __init__(self, current_screen):
         self.began = False
         self.on_exit = False
@@ -441,11 +528,13 @@ class Engine():
             black.draw()
 
     def on_click(self, x, y, button):
-        self.current_screen.on_click(x, y, button)
+        x1 = int(x * SCREENW / window.width)
+        y1 = int(y * SCREENH / window.height)
+        self.current_screen.on_click(x1, y1, button)
 
     def mouse_XY(self, x, y, dx, dy):
-        self.mouse_X = x
-        self.mouse_Y = y
+        self.mouse_X = int(x * SCREENW / window.width)
+        self.mouse_Y = int(y * SCREENH / window.height)
 
     def on_key_press(self, symbol, modifiers):
         self.current_screen.on_key_press(symbol, modifiers)
@@ -503,6 +592,7 @@ class Hud:
 
 
 class Screen():
+
     def __init__(self):
         pass
 
@@ -523,6 +613,7 @@ class Screen():
 
 
 class SceneObject():
+
     def __init__(self, id, solid, name, x, y, width=0, height=0, sprite=None,
                  visible=True):
         self.id = id
@@ -553,6 +644,7 @@ class SceneObject():
 
 
 class SplashScreen(Screen):
+
     def __init__(self):
         self.obj_list = []
         self.count = 0
@@ -1290,11 +1382,18 @@ bedroom.obj_list.append(desktop)
 fishing_game.obj_list.append(boundary_left)  # Fishing game
 fishing_game.obj_list.append(boundary_right)
 
+target_width, target_height = target_resolution
+viewport = FixedResolution(window,
+                           target_width,
+                           target_height)
+
 
 @window.event
 def on_draw():
+    viewport.begin()
     window.clear()
     engine.draw()
+    viewport.end()
 
 
 @window.event
