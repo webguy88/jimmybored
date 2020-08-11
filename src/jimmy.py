@@ -367,7 +367,6 @@ class Player():
         self.walking = False
         self.stamina = 5
         self.is_sleeping = False
-
         self.jimmy_idle = sprite.Sprite(self.images_idle[0])
         self.jimmy_walk_r = sprite.Sprite(self.jimmy_right)
         self.jimmy_walk_l = sprite.Sprite(self.jimmy_left)
@@ -428,6 +427,11 @@ class Player():
             elif self.walking and self.direction == 1:
                 self.sprite = self.jimmy_walk_l
 
+            if self.is_sleeping:
+                self.x = 77
+                self.y = 236
+                self.sprite = self.jimmy_walk_r
+
         if engine.current_screen == fishing_game:
             if not fishing_game.caught_something:
                 self.sprite = self.fisherman
@@ -443,7 +447,6 @@ class Player():
         self.hitbox = new_hitbox
 
     def stamina_drain(self, dt):
-        print(self.stamina)
         if self.stamina > 0:
             self.stamina -= 1
 
@@ -527,6 +530,11 @@ class Engine():
             black.opacity = min(self.opacity, 255)
             black.draw()
 
+        elif player.is_sleeping:
+            self.opacity += 5
+            black.opacity = min(self.opacity, 255)
+            black.draw()
+
     def on_click(self, x, y, button):
         x1 = int(x * SCREENW / window.width)
         y1 = int(y * SCREENH / window.height)
@@ -544,7 +552,8 @@ class Engine():
         self.current_screen.update(dt)
         self.hud.update(dt)
 
-        if self.opacity >= 255:
+        if self.opacity >= 255 and \
+           not player.is_sleeping:
             self.enter()
 
     def set_current_screen(self, current_screen):
@@ -994,7 +1003,10 @@ class Bedroom(Screen):
                 and symbol == key.SPACE
                 and player.stamina <= 1
             ):
-                engine.on_exit = True
+                clock.schedule_once(sleep, 3)
+                player.is_sleeping = True
+                player.x = 77
+                player.y = 256
 
             if player.is_over_trash and symbol == key.SPACE \
                and not player.has_game_fish:
@@ -1418,7 +1430,8 @@ def update(dt):
     engine.update(dt)
     player.update(dt)
 
-    if engine.began and engine.layer == GAME:
+    if engine.began and engine.layer == GAME and \
+       not player.is_sleeping:
         # Normal movement
         if keys[key.W]:
             player.change_direction(0, 0, 170)
@@ -1475,6 +1488,17 @@ def fish_timer(dt):
 @window.event
 def fish_spawner(dt):
     fishing_game.fish_spawner(dt)
+
+
+@window.event
+def sleep(dt):
+    print("Hello")
+    if player.is_sleeping:
+        engine.enter()
+        player.is_sleeping = False
+        player.stamina = 5
+        player.x = 320
+        player.y = 148
 
 
 @window.event
