@@ -1434,36 +1434,67 @@ def update(dt):
        not player.is_sleeping:
         # Normal movement
         if keys[key.W]:
-            player.change_direction(0, 0, 170)
+            if player.stamina > 1:
+                player.change_direction(0, 0, 170)
+            else:
+                player.change_direction(0, 0, 80)
+
             player.walking = True
 
         if keys[key.A]:
-            player.change_direction(1, -170, 0)
+            if player.stamina > 1:
+                player.change_direction(1, -170, 0)
+            else:
+                player.change_direction(1, -80, 0)
+
             player.walking = True
 
         if keys[key.S]:
-            player.change_direction(1, 0, -170)
+            if player.stamina > 1:
+                player.change_direction(1, 0, -170)
+            else:
+                player.change_direction(1, 0, -80)
+
             player.walking = True
 
         if keys[key.D]:
-            player.change_direction(0, 170, 0)
+            if player.stamina > 1:
+                player.change_direction(0, 170, 0)
+            else:
+                player.change_direction(0, 80, 0)
+
             player.walking = True
 
         # Diagonal implementation
         if keys[key.W] and keys[key.A]:
-            player.change_direction(1, -160, 160)
+            if player.stamina > 1:
+                player.change_direction(1, -160, 160)
+            else:
+                player.change_direction(1, -70, 70)
+
             player.walking = True
 
         if keys[key.W] and keys[key.D]:
-            player.change_direction(0, 160, 160)
+            if player.stamina > 1:
+                player.change_direction(0, 160, 160)
+            else:
+                player.change_direction(0, 70, 70)
+
             player.walking = True
 
         if keys[key.S] and keys[key.A]:
-            player.change_direction(1, -160, -160)
+            if player.stamina > 1:
+                player.change_direction(1, -160, -160)
+            else:
+                player.change_direction(1, -70, -70)
             player.walking = True
 
         if keys[key.S] and keys[key.D]:
-            player.change_direction(0, 160, -160)
+            if player.stamina > 1:
+                player.change_direction(0, 160, -160)
+            else:
+                player.change_direction(0, 70, -70)
+
             player.walking = True
 
         # Cancel two keys at the same time
@@ -1492,7 +1523,6 @@ def fish_spawner(dt):
 
 @window.event
 def sleep(dt):
-    print("Hello")
     if player.is_sleeping:
         engine.enter()
         player.is_sleeping = False
