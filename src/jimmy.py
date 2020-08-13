@@ -516,6 +516,7 @@ class Engine():
         self.next_screen = current_screen
         self.hud = Hud()
         self.layer = SPLASH
+        self.showing_games = False
 
         if self.layer is not MENU and \
            self.layer is not SPLASH:
@@ -551,6 +552,9 @@ class Engine():
         window.set_mouse_cursor(default_cur)
         self.current_screen.update(dt)
         self.hud.update(dt)
+
+        if self.layer == GAME:
+            self.showing_games = False
 
         if self.opacity >= 255 and \
            not player.is_sleeping:
@@ -610,6 +614,10 @@ class Hud:
            len(player.games) > 0:
             self.bag.draw()
 
+        if engine.showing_games and \
+           "fish" in player.games:
+            bedroom.disc1.draw()
+
     def on_click(self, x, y, button):
         if engine.current_screen in [bedroom] and \
            self.bag_region.contain(x, y) and \
@@ -617,6 +625,7 @@ class Hud:
            engine.layer == GAME:
             bedroom.message = text.Label("")
             engine.layer = MSG
+            engine.showing_games = True
 
 
 class Screen():
@@ -892,7 +901,7 @@ class Bedroom(Screen):
     tr_outline = sprite.Sprite(trash_outline, x=0, y=0)
     desk_spr = sprite.Sprite(desk, x=0, y=0)
     desk_out = sprite.Sprite(desk_outline, x=0, y=0)
-    disc1 = sprite.Sprite(fish_disc, x=600, y=435)
+    disc1 = sprite.Sprite(fish_disc, x=140, y=330)
     popup = sprite.Sprite(message_show, x=0, y=0)
     popup_button_un = sprite.Sprite(popup_button_U, x=320, y=100)
     popup_button_se = sprite.Sprite(popup_button_S, x=320, y=100)
@@ -1012,6 +1021,7 @@ class Bedroom(Screen):
                 select.play()
                 engine.layer = MSG
                 self.message = self.bed_text
+                engine.showing_games = False
 
             elif (
                 player.is_over_bed
@@ -1028,29 +1038,34 @@ class Bedroom(Screen):
                 select.play()
                 engine.layer = MSG
                 self.message = self.trash_text1
+                engine.showing_games = False
 
             if player.is_over_trash and symbol == key.SPACE \
                and "fish" in player.games:
                 select.play()
                 engine.layer = MSG
                 self.message = self.trash_text2
+                engine.showing_games = False
 
             if player.is_over_desktop and symbol == key.SPACE \
                and "fish" not in player.games:
                 select.play()
                 engine.layer = MSG
                 self.message = self.game_text1
+                engine.showing_games = False
 
             if player.is_over_desktop and symbol == key.SPACE \
                and "fish" in player.games:
                 select.play()
                 engine.layer = MSG
                 self.message = self.game_text2
+                engine.showing_games = False
 
             if symbol == key.R:
                 engine.began = False
                 engine.layer = MENU
                 engine.set_next_screen(main_menu)
+                engine.showing_games = False
 
     def update(self, dt):
 
