@@ -146,6 +146,7 @@ center_image(desk_outline)
 center_image(fish_disc)
 center_image(popup_button_U)
 center_image(popup_button_S)
+center_image(close_window)
 
 center_image(logo)
 center_image(button_play)
@@ -586,9 +587,15 @@ class Hud:
     popup = sprite.Sprite(message_show, x=0, y=0)
     popup_un = sprite.Sprite(popup_button_U, x=320, y=100)
     popup_se = sprite.Sprite(popup_button_S, x=320, y=100)
+    close_pop = sprite.Sprite(close_window, x=581, y=408)
 
     def __init__(self):
         self.bag_region = Region(565, 405, 64, 64)
+        self.close_region = Region(x=self.close_pop.x -
+                                   self.close_pop.width // 2,
+                                   y=self.close_pop.y -
+                                   self.close_pop.height // 2,
+                                   width=94, height=94)
 
     def update(self, dt):
         if player.stamina == 5:
@@ -608,6 +615,10 @@ class Hud:
            self.bag_region.contain(engine.mouse_X, engine.mouse_Y) and \
            len(player.games) > 0 and not player.is_sleeping and \
            engine.layer == GAME:
+            window.set_mouse_cursor(choose_cur)
+
+        if engine.layer == MSG and \
+           self.close_region.contain(engine.mouse_X, engine.mouse_Y):
             window.set_mouse_cursor(choose_cur)
 
     def draw(self):
@@ -630,6 +641,10 @@ class Hud:
             bedroom.message = text.Label("")
             engine.layer = MSG
             engine.showing_games = True
+
+        if engine.layer == MSG and \
+           self.close_region.contain(x, y):
+            engine.layer = GAME
 
 
 class Screen():
@@ -983,6 +998,7 @@ class Bedroom(Screen):
         if engine.layer == MSG:
             engine.hud.popup.draw()
             self.message.draw()
+            engine.hud.close_pop.draw()
 
             if self.mouse_over_button:
                 engine.hud.popup_se.draw()
