@@ -29,6 +29,7 @@ desk_outline = resource.image('desk_outline.png')
 fish_disc = resource.image('fish_disc.png')
 game_bag = resource.image('game_bag.png')
 message_show = resource.image('message_show.png')
+close_window = resource.image('close_window.png')
 popup_button_U = resource.image('popup_button_U.png')
 popup_button_S = resource.image('popup_button_S.png')
 
@@ -582,6 +583,9 @@ class Hud:
     stamina_3 = sprite.Sprite(stamina3, x=20, y=390)
     stamina_4 = sprite.Sprite(stamina4, x=20, y=390)
     bag = sprite.Sprite(game_bag, x=565, y=405)
+    popup = sprite.Sprite(message_show, x=0, y=0)
+    popup_un = sprite.Sprite(popup_button_U, x=320, y=100)
+    popup_se = sprite.Sprite(popup_button_S, x=320, y=100)
 
     def __init__(self):
         self.bag_region = Region(565, 405, 64, 64)
@@ -902,18 +906,15 @@ class Bedroom(Screen):
     desk_spr = sprite.Sprite(desk, x=0, y=0)
     desk_out = sprite.Sprite(desk_outline, x=0, y=0)
     disc1 = sprite.Sprite(fish_disc, x=140, y=330)
-    popup = sprite.Sprite(message_show, x=0, y=0)
-    popup_button_un = sprite.Sprite(popup_button_U, x=320, y=100)
-    popup_button_se = sprite.Sprite(popup_button_S, x=320, y=100)
 
     def __init__(self):
         engine.layer = GAME
         self.obj_list = []
         self.mouse_over_button = False
-        self.popup_button_region = Region(self.popup_button_un.x -
-                                          self.popup_button_un.width // 2,
-                                          self.popup_button_un.y -
-                                          self.popup_button_un.height // 2,
+        self.popup_button_region = Region(engine.hud.popup_un.x -
+                                          engine.hud.popup_un.width // 2,
+                                          engine.hud.popup_un.y -
+                                          engine.hud.popup_un.height // 2,
                                           234, 84)
 
         # Texts
@@ -980,13 +981,13 @@ class Bedroom(Screen):
         self.effect.draw()
 
         if engine.layer == MSG:
-            self.popup.draw()
+            engine.hud.popup.draw()
             self.message.draw()
 
             if self.mouse_over_button:
-                self.popup_button_se.draw()
+                engine.hud.popup_se.draw()
             else:
-                self.popup_button_un.draw()
+                engine.hud.popup_un.draw()
 
         main_music.pause()
         fish_music.pause()
