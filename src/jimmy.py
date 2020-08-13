@@ -26,8 +26,8 @@ trash_can = resource.image('trash_can.png')
 trash_outline = resource.image('trash_outline.png')
 desk = resource.image('desk.png')
 desk_outline = resource.image('desk_outline.png')
-desk_game = resource.image('desk_game.png')
-game_disc = resource.image('game_disc.png')
+fish_disc = resource.image('fish_disc.png')
+game_bag = resource.image('game_bag.png')
 message_show = resource.image('message_show.png')
 popup_button_U = resource.image('popup_button_U.png')
 popup_button_S = resource.image('popup_button_S.png')
@@ -142,8 +142,7 @@ center_image(trash_can)
 center_image(trash_outline)
 center_image(desk)
 center_image(desk_outline)
-center_image(desk_game)
-center_image(game_disc)
+center_image(fish_disc)
 center_image(popup_button_U)
 center_image(popup_button_S)
 
@@ -379,7 +378,7 @@ class Player():
         self.is_over_bed = False
         self.is_over_trash = False
         self.is_over_desktop = False
-        self.has_game_fish = False
+        self.games = []
 
     def draw(self):
         self.sprite.draw()
@@ -539,6 +538,7 @@ class Engine():
         x1 = int(x * SCREENW / window.width)
         y1 = int(y * SCREENH / window.height)
         self.current_screen.on_click(x1, y1, button)
+        self.hud.on_click(x1, y1, button)
 
     def mouse_XY(self, x, y, dx, dy):
         self.mouse_X = int(x * SCREENW / window.width)
@@ -577,9 +577,10 @@ class Hud:
     stamina_2 = sprite.Sprite(stamina2, x=20, y=390)
     stamina_3 = sprite.Sprite(stamina3, x=20, y=390)
     stamina_4 = sprite.Sprite(stamina4, x=20, y=390)
+    bag = sprite.Sprite(game_bag, x=565, y=405)
 
     def __init__(self):
-        pass
+        self.bag_region = Region(565, 405, 64, 64)
 
     def update(self, dt):
         if player.stamina == 5:
@@ -595,9 +596,27 @@ class Hud:
         if player.stamina == 0:
             self.stamina_display = self.stamina_0
 
+        if engine.current_screen in [bedroom] and \
+           self.bag_region.contain(engine.mouse_X, engine.mouse_Y) and \
+           len(player.games) > 0 and not player.is_sleeping and \
+           engine.layer == GAME:
+            window.set_mouse_cursor(choose_cur)
+
     def draw(self):
         if engine.current_screen in [bedroom]:
             self.stamina_display.draw()
+
+        if engine.current_screen in [bedroom] and \
+           len(player.games) > 0:
+            self.bag.draw()
+
+    def on_click(self, x, y, button):
+        if engine.current_screen in [bedroom] and \
+           self.bag_region.contain(x, y) and \
+           len(player.games) > 0 and not player.is_sleeping and \
+           engine.layer == GAME:
+            bedroom.message = text.Label("")
+            engine.layer = MSG
 
 
 class Screen():
@@ -873,8 +892,7 @@ class Bedroom(Screen):
     tr_outline = sprite.Sprite(trash_outline, x=0, y=0)
     desk_spr = sprite.Sprite(desk, x=0, y=0)
     desk_out = sprite.Sprite(desk_outline, x=0, y=0)
-    desk_w_game = sprite.Sprite(desk_game, x=0, y=0)
-    disc = sprite.Sprite(game_disc, x=600, y=435)
+    disc1 = sprite.Sprite(fish_disc, x=600, y=435)
     popup = sprite.Sprite(message_show, x=0, y=0)
     popup_button_un = sprite.Sprite(popup_button_U, x=320, y=100)
     popup_button_se = sprite.Sprite(popup_button_S, x=320, y=100)
@@ -952,9 +970,6 @@ class Bedroom(Screen):
         self.b_neck_spr.draw()
         self.effect.draw()
 
-        if player.has_game_fish:
-            self.disc.draw()
-
         if engine.layer == MSG:
             self.popup.draw()
             self.message.draw()
@@ -979,7 +994,7 @@ class Bedroom(Screen):
             if self.popup_button_region.contain(x, y) and \
                self.message == self.trash_text1:
                 engine.layer = GAME
-                player.has_game_fish = True
+                player.games.append("fish")
 
             if self.popup_button_region.contain(x, y) and \
                self.message == self.game_text2:
@@ -1009,25 +1024,25 @@ class Bedroom(Screen):
                 player.y = 256
 
             if player.is_over_trash and symbol == key.SPACE \
-               and not player.has_game_fish:
+               and "fish" not in player.games:
                 select.play()
                 engine.layer = MSG
                 self.message = self.trash_text1
 
             if player.is_over_trash and symbol == key.SPACE \
-               and player.has_game_fish:
+               and "fish" in player.games:
                 select.play()
                 engine.layer = MSG
                 self.message = self.trash_text2
 
             if player.is_over_desktop and symbol == key.SPACE \
-               and not player.has_game_fish:
+               and "fish" not in player.games:
                 select.play()
                 engine.layer = MSG
                 self.message = self.game_text1
 
             if player.is_over_desktop and symbol == key.SPACE \
-               and player.has_game_fish:
+               and "fish" in player.games:
                 select.play()
                 engine.layer = MSG
                 self.message = self.game_text2
