@@ -381,6 +381,7 @@ class Player():
         self.is_over_trash = False
         self.is_over_desktop = False
         self.games = []
+        self.game_selected = ""
 
     def draw(self):
         self.sprite.draw()
@@ -588,8 +589,10 @@ class Hud:
     popup_un = sprite.Sprite(popup_button_U, x=320, y=100)
     popup_se = sprite.Sprite(popup_button_S, x=320, y=100)
     close_pop = sprite.Sprite(close_window, x=581, y=108)
+    disc1 = sprite.Sprite(fish_disc, x=140, y=275)
 
     def __init__(self):
+        self.from_bag = False
         self.bag_region = Region(565, 405, 64, 64)
         self.close_region = Region(x=self.close_pop.x -
                                    self.close_pop.width // 2,
@@ -601,6 +604,10 @@ class Hud:
                                           self.popup_un.y -
                                           self.popup_un.height // 2,
                                           234, 84)
+
+        self.disc1_region = Region(x=self.disc1.x - self.disc1.width // 2,
+                                   y=self.disc1.y - self.disc1.height // 2,
+                                   width=128, height=128)
 
     def update(self, dt):
         if player.stamina == 5:
@@ -626,6 +633,12 @@ class Hud:
            self.close_region.contain(engine.mouse_X, engine.mouse_Y):
             window.set_mouse_cursor(choose_cur)
 
+        if engine.layer == MSG and \
+           player.is_over_desktop and \
+           not self.from_bag and \
+           self.disc1_region.contain(engine.mouse_X, engine.mouse_Y):
+            window.set_mouse_cursor(choose_cur)
+
     def draw(self):
         if engine.current_screen in [bedroom]:
             self.stamina_display.draw()
@@ -636,7 +649,7 @@ class Hud:
 
         if engine.showing_games and \
            "fish" in player.games:
-            bedroom.disc1.draw()
+            self.disc1.draw()
 
     def on_click(self, x, y, button):
         if engine.current_screen in [bedroom] and \
@@ -646,6 +659,7 @@ class Hud:
             bedroom.message = text.Label("")
             engine.layer = MSG
             engine.showing_games = True
+            self.from_bag = True
 
         if engine.layer == MSG and \
            not engine.showing_games and \
@@ -655,8 +669,15 @@ class Hud:
         if engine.layer == MSG and \
            self.close_region.contain(x, y):
             engine.layer = GAME
+            self.from_bag = False
 
-        print(engine.layer)
+        if engine.layer == MSG and \
+           player.is_over_desktop and \
+           not self.from_bag and \
+           self.disc1_region.contain(x, y):
+            engine.showing_games = False
+            engine.layer = FISHING
+            engine.set_next_screen(fishing_game)
 
 
 class Screen():
@@ -932,7 +953,6 @@ class Bedroom(Screen):
     tr_outline = sprite.Sprite(trash_outline, x=0, y=0)
     desk_spr = sprite.Sprite(desk, x=0, y=0)
     desk_out = sprite.Sprite(desk_outline, x=0, y=0)
-    disc1 = sprite.Sprite(fish_disc, x=140, y=330)
 
     def __init__(self):
         engine.layer = GAME
@@ -981,9 +1001,8 @@ class Bedroom(Screen):
 
         self.game_text2 = text.Label(
             """
-            Looks like you have a game!
-              Do you want to play it?
-            """, x=280, y=140,
+             What game will you choose?
+            """, x=280, y=230,
             anchor_x='center', anchor_y='center',
             font_size=24, color=(255, 255, 255, 255),
             multiline=True, width=562, height=357
@@ -1022,6 +1041,7 @@ class Bedroom(Screen):
         if engine.layer == MSG:
 
             if engine.hud.popup_button_region.contain(x, y):
+                engine.hud.from_bag = False
                 engine.layer = GAME
 
             if engine.hud.popup_button_region.contain(x, y) and \
@@ -1031,8 +1051,7 @@ class Bedroom(Screen):
 
             if engine.hud.popup_button_region.contain(x, y) and \
                self.message == self.game_text2:
-                engine.layer = FISHING
-                engine.set_next_screen(fishing_game)
+                player.game_selected = "fish"
 
     def on_key_press(self, symbol, modifiers):
         if engine.layer == GAME and \
@@ -1083,7 +1102,7 @@ class Bedroom(Screen):
                 select.play()
                 engine.layer = MSG
                 self.message = self.game_text2
-                engine.showing_games = False
+                engine.showing_games = True
 
             if symbol == key.R:
                 engine.began = False
