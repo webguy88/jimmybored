@@ -594,6 +594,7 @@ class Hud:
     disc1 = sprite.Sprite(fish_disc, x=140, y=275)
 
     def __init__(self):
+        self.mouse_over_button = False
         self.from_bag = False
         self.bag_region = Region(565, 405, 64, 64)
         self.close_region = Region(x=self.close_pop.x -
@@ -642,7 +643,28 @@ class Hud:
            self.disc1_region.contain(engine.mouse_X, engine.mouse_Y):
             window.set_mouse_cursor(choose_cur)
 
+        if engine.layer == MSG:
+
+            if engine.hud.popup_button_region.contain(engine.mouse_X,
+                                                      engine.mouse_Y):
+                self.mouse_over_button = True
+                window.set_mouse_cursor(choose_cur)
+            else:
+                self.mouse_over_button = False
+
     def draw(self):
+
+        if engine.layer == MSG and \
+           engine.current_screen in [bedroom, hall_upper]:
+            self.popup.draw()
+            bedroom.message.draw()
+            self.close_pop.draw()
+
+            if self.mouse_over_button:
+                engine.hud.popup_se.draw()
+            else:
+                engine.hud.popup_un.draw()
+
         if engine.current_screen in [bedroom, hall_upper]:
             self.stamina_display.draw()
 
@@ -682,6 +704,11 @@ class Hud:
             engine.showing_games = False
             engine.layer = FISHING
             engine.set_next_screen(fishing_game)
+            
+        if engine.layer == MSG and \
+           self.popup_button_region.contain(x, y):
+            self.from_bag = False
+            engine.layer = GAME
 
 
 class Screen():
@@ -961,7 +988,6 @@ class Bedroom(Screen):
     def __init__(self):
         engine.layer = GAME
         self.obj_list = []
-        self.mouse_over_button = False
 
         # Texts
         self.bed_text = text.Label(
@@ -1025,17 +1051,6 @@ class Bedroom(Screen):
         self.b_neck_spr.draw()
         self.effect.draw()
 
-        if engine.layer == MSG and \
-           engine.current_screen in [bedroom, hall_upper]:
-            engine.hud.popup.draw()
-            self.message.draw()
-            engine.hud.close_pop.draw()
-
-            if self.mouse_over_button:
-                engine.hud.popup_se.draw()
-            else:
-                engine.hud.popup_un.draw()
-
         main_music.pause()
         fish_music.pause()
 
@@ -1044,10 +1059,6 @@ class Bedroom(Screen):
 
     def on_click(self, x, y, button):
         if engine.layer == MSG:
-
-            if engine.hud.popup_button_region.contain(x, y):
-                engine.hud.from_bag = False
-                engine.layer = GAME
 
             if engine.hud.popup_button_region.contain(x, y) and \
                self.message == self.trash_text1:
@@ -1151,16 +1162,6 @@ class Bedroom(Screen):
             player.is_over_desktop = False
 
         # ~~~~~~~~~~~~~~
-
-        # POPUPS RELATED
-        if engine.layer == MSG:
-
-            if engine.hud.popup_button_region.contain(engine.mouse_X,
-                                                      engine.mouse_Y):
-                self.mouse_over_button = True
-                window.set_mouse_cursor(choose_cur)
-            else:
-                self.mouse_over_button = False
 
     def is_key_pressed(self):
         for _k, v in keys.items():
