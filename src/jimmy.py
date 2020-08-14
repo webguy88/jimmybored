@@ -421,7 +421,7 @@ class Player():
                 return
 
         # Calculate Jimmy sprite
-        if engine.current_screen == bedroom:
+        if engine.current_screen in [bedroom, hall_upper]:
             if not self.walking:
                 self.sprite = self.jimmy_idle
 
