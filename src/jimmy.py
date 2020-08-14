@@ -643,7 +643,7 @@ class Hud:
             window.set_mouse_cursor(choose_cur)
 
     def draw(self):
-        if engine.current_screen in [bedroom]:
+        if engine.current_screen in [bedroom, hall_upper]:
             self.stamina_display.draw()
 
         if engine.current_screen in [bedroom, hall_upper] and \
@@ -1025,7 +1025,8 @@ class Bedroom(Screen):
         self.b_neck_spr.draw()
         self.effect.draw()
 
-        if engine.layer == MSG:
+        if engine.layer == MSG and \
+           engine.current_screen in [bedroom, hall_upper]:
             engine.hud.popup.draw()
             self.message.draw()
             engine.hud.close_pop.draw()
@@ -1058,8 +1059,7 @@ class Bedroom(Screen):
                 player.game_selected = "fish"
 
     def on_key_press(self, symbol, modifiers):
-        if engine.layer == GAME and \
-           engine.current_screen == bedroom:
+        if engine.layer == GAME:
             if player.is_over_bass and symbol == key.SPACE:
                 bass_notes[randint(0, 12)].play()
 
