@@ -587,7 +587,7 @@ class Hud:
     popup = sprite.Sprite(message_show, x=0, y=0)
     popup_un = sprite.Sprite(popup_button_U, x=320, y=100)
     popup_se = sprite.Sprite(popup_button_S, x=320, y=100)
-    close_pop = sprite.Sprite(close_window, x=581, y=408)
+    close_pop = sprite.Sprite(close_window, x=581, y=108)
 
     def __init__(self):
         self.bag_region = Region(565, 405, 64, 64)
@@ -596,6 +596,11 @@ class Hud:
                                    y=self.close_pop.y -
                                    self.close_pop.height // 2,
                                    width=94, height=94)
+        self.popup_button_region = Region(self.popup_un.x -
+                                          self.popup_un.width // 2,
+                                          self.popup_un.y -
+                                          self.popup_un.height // 2,
+                                          234, 84)
 
     def update(self, dt):
         if player.stamina == 5:
@@ -643,8 +648,15 @@ class Hud:
             engine.showing_games = True
 
         if engine.layer == MSG and \
+           not engine.showing_games and \
+           self.popup_button_region.contain(x, y):
+            engine.layer = GAME
+
+        if engine.layer == MSG and \
            self.close_region.contain(x, y):
             engine.layer = GAME
+
+        print(engine.layer)
 
 
 class Screen():
@@ -926,11 +938,6 @@ class Bedroom(Screen):
         engine.layer = GAME
         self.obj_list = []
         self.mouse_over_button = False
-        self.popup_button_region = Region(engine.hud.popup_un.x -
-                                          engine.hud.popup_un.width // 2,
-                                          engine.hud.popup_un.y -
-                                          engine.hud.popup_un.height // 2,
-                                          234, 84)
 
         # Texts
         self.bed_text = text.Label(
@@ -1014,15 +1021,15 @@ class Bedroom(Screen):
     def on_click(self, x, y, button):
         if engine.layer == MSG:
 
-            if self.popup_button_region.contain(x, y):
+            if engine.hud.popup_button_region.contain(x, y):
                 engine.layer = GAME
 
-            if self.popup_button_region.contain(x, y) and \
+            if engine.hud.popup_button_region.contain(x, y) and \
                self.message == self.trash_text1:
                 engine.layer = GAME
                 player.games.append("fish")
 
-            if self.popup_button_region.contain(x, y) and \
+            if engine.hud.popup_button_region.contain(x, y) and \
                self.message == self.game_text2:
                 engine.layer = FISHING
                 engine.set_next_screen(fishing_game)
@@ -1120,7 +1127,7 @@ class Bedroom(Screen):
         # POPUPS RELATED
         if engine.layer == MSG:
 
-            if self.popup_button_region.contain(engine.mouse_X,
+            if engine.hud.popup_button_region.contain(engine.mouse_X,
                                                 engine.mouse_Y):
                 self.mouse_over_button = True
                 window.set_mouse_cursor(choose_cur)
