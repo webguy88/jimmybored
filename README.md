@@ -32,3 +32,4 @@ Itch.io page: https://webguy88.itch.io/jimmybored
 Gamejolt page: https://gamejolt.com/games/jimmybored/516532
 
 ![](./screenshot1new.png)
+![](./screenshot2.png)
