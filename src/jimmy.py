@@ -625,7 +625,7 @@ class Hud:
         if player.stamina == 0:
             self.stamina_display = self.stamina_0
 
-        if engine.current_screen in [bedroom] and \
+        if engine.current_screen in [bedroom, hall_upper] and \
            self.bag_region.contain(engine.mouse_X, engine.mouse_Y) and \
            len(player.games) > 0 and not player.is_sleeping and \
            engine.layer == GAME:
@@ -646,7 +646,7 @@ class Hud:
         if engine.current_screen in [bedroom]:
             self.stamina_display.draw()
 
-        if engine.current_screen in [bedroom] and \
+        if engine.current_screen in [bedroom, hall_upper] and \
            len(player.games) > 0:
             self.bag.draw()
 
@@ -655,7 +655,7 @@ class Hud:
             self.disc1.draw()
 
     def on_click(self, x, y, button):
-        if engine.current_screen in [bedroom] and \
+        if engine.current_screen in [bedroom, hall_upper] and \
            self.bag_region.contain(x, y) and \
            len(player.games) > 0 and not player.is_sleeping and \
            engine.layer == GAME:
