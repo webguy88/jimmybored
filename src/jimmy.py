@@ -14,7 +14,7 @@ resource.reindex()
 pyglet.options['debug_gl'] = False
 
 dark = resource.image('black.png')
-room_floor = resource.image('bg.png')
+playground_floor = resource.image('bg.png')
 dark_effect = resource.image('effect.png')
 bed_img = resource.image('bed.png')
 wall_img = resource.image('wall.png')
@@ -943,7 +943,7 @@ class Credit(Screen):
 
 class Bedroom(Screen):
 
-    floor = sprite.Sprite(room_floor, x=0, y=0)
+    floor = sprite.Sprite(playground_floor, x=0, y=0)
     effect = sprite.Sprite(dark_effect, x=0, y=0)
     bed_spr = sprite.Sprite(bed_img, x=0, y=0)
     wall_spr = sprite.Sprite(wall_img, x=0, y=0)
