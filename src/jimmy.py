@@ -636,6 +636,7 @@ class Hud:
         if engine.layer == MSG and \
            player.is_over_desktop and \
            not self.from_bag and \
+           len(player.games) > 0 and \
            self.disc1_region.contain(engine.mouse_X, engine.mouse_Y):
             window.set_mouse_cursor(choose_cur)
 
@@ -674,6 +675,7 @@ class Hud:
         if engine.layer == MSG and \
            player.is_over_desktop and \
            not self.from_bag and \
+           len(player.games) > 0 and \
            self.disc1_region.contain(x, y):
             engine.showing_games = False
             engine.layer = FISHING
@@ -1147,7 +1149,7 @@ class Bedroom(Screen):
         if engine.layer == MSG:
 
             if engine.hud.popup_button_region.contain(engine.mouse_X,
-                                                engine.mouse_Y):
+                                                      engine.mouse_Y):
                 self.mouse_over_button = True
                 window.set_mouse_cursor(choose_cur)
             else:
