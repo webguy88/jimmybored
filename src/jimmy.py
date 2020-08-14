@@ -33,6 +33,8 @@ close_window = resource.image('close_window.png')
 popup_button_U = resource.image('popup_button_U.png')
 popup_button_S = resource.image('popup_button_S.png')
 
+hall1 = resource.image('up_hall.png')
+
 menu_screen = resource.image('main_menu.png')
 menu_dark = resource.image('menu_dark.png')
 logo = resource.image('logo.png')
@@ -1112,6 +1114,11 @@ class Bedroom(Screen):
                 engine.set_next_screen(main_menu)
                 engine.showing_games = False
 
+            if symbol == key.X:
+                engine.set_next_screen(hall_upper)
+                player.x = 600
+                player.y = 70
+
     def update(self, dt):
 
         # Outlining
@@ -1163,7 +1170,37 @@ class Bedroom(Screen):
         return False
 
 
-# ~~~~~~~~~
+class HallUpper(Screen):
+
+    bg = sprite.Sprite(hall1, x=0, y=0)
+
+    def __init__(self):
+        self.obj_list = []
+
+    def draw(self):
+        self.bg.draw()
+
+        player.draw()
+
+    def on_click(self, x, y, button):
+        pass
+
+    def on_key_press(self, symbol, modifiers):
+        if symbol == key.P:
+            engine.set_next_screen(bedroom)
+            player.x = 50
+            player.y = 70
+
+    def update(self, dt):
+        pass
+
+    def is_key_pressed(self):
+        for _k, v in keys.items():
+            if v:
+                return True
+
+        return False
+
 
 
 class FishingGame(Screen):
@@ -1439,6 +1476,7 @@ main_menu = MainMenu()
 credit_screen = Credit()
 engine = Engine(splash_screen)
 bedroom = Bedroom()
+hall_upper = HallUpper()
 fishing_game = FishingGame()
 
 # Add all the scene objects
