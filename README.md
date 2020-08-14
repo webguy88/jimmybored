@@ -28,6 +28,7 @@ Else, just download the Linux file and run it as usual.
 So, have fun! :)
 
 Itch.io page: https://webguy88.itch.io/jimmybored
+
 Gamejolt page: https://gamejolt.com/games/jimmybored/516532
 
 ![](./screenshot1.png)
