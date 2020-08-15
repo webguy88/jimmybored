@@ -704,7 +704,7 @@ class Hud:
             engine.showing_games = False
             engine.layer = FISHING
             engine.set_next_screen(fishing_game)
-            
+
         if engine.layer == MSG and \
            self.popup_button_region.contain(x, y):
             self.from_bag = False
@@ -988,6 +988,7 @@ class Bedroom(Screen):
     def __init__(self):
         engine.layer = GAME
         self.obj_list = []
+        self.go_hall = Region(0, 20, 30, 100)
 
         # Texts
         self.bed_text = text.Label(
@@ -1161,6 +1162,11 @@ class Bedroom(Screen):
             outline_desktop.visible = False
             player.is_over_desktop = False
 
+        if player.hitbox.collides(self.go_hall):
+            engine.set_next_screen(hall_upper)
+            player.x = 560
+            player.y = 70
+
         # ~~~~~~~~~~~~~~
 
     def is_key_pressed(self):
@@ -1177,6 +1183,7 @@ class HallUpper(Screen):
 
     def __init__(self):
         self.obj_list = []
+        self.go_bedroom = Region(610, 20, 30, 100)
 
     def draw(self):
         self.bg.draw()
@@ -1187,13 +1194,13 @@ class HallUpper(Screen):
         pass
 
     def on_key_press(self, symbol, modifiers):
-        if symbol == key.P:
-            engine.set_next_screen(bedroom)
-            player.x = 50
-            player.y = 70
+        pass
 
     def update(self, dt):
-        pass
+        if player.hitbox.collides(self.go_bedroom):
+            engine.set_next_screen(bedroom)
+            player.x = 70
+            player.y = 70
 
     def is_key_pressed(self):
         for _k, v in keys.items():
@@ -1201,7 +1208,6 @@ class HallUpper(Screen):
                 return True
 
         return False
-
 
 
 class FishingGame(Screen):
