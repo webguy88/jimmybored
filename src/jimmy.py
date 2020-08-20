@@ -1199,7 +1199,7 @@ class HallUpper(Screen):
         player.draw()
 
     def on_click(self, x, y, button):
-        pass
+        print(engine.mouse_X, engine.mouse_Y)
 
     def on_key_press(self, symbol, modifiers):
         pass
@@ -1485,6 +1485,15 @@ outline_desktop = SceneObject(id=11, solid=False, name="desktop_outline",
                               x=480, y=255, width=190, height=125,
                               sprite=Bedroom.desk_out, visible=False)
 
+stairs = SceneObject(id=12, solid=True, name="stairs", x=320, y=250,
+                     width=215, height=130)
+
+circle1 = SceneObject(id=13, solid=True, name="circle1", x=220, y=185,
+                      width=32, height=64)
+
+circle2 = SceneObject(id=14, solid=True, name="circle2", x=430, y=178,
+                      width=32, height=64)
+
 # Fishing game objects
 ...
 
@@ -1525,6 +1534,9 @@ hall_upper.obj_list.append(boundary_down)  # Hall
 hall_upper.obj_list.append(boundary_left)
 hall_upper.obj_list.append(boundary_right)
 hall_upper.obj_list.append(wall)
+hall_upper.obj_list.append(stairs)
+hall_upper.obj_list.append(circle1)
+hall_upper.obj_list.append(circle2)
 
 fishing_game.obj_list.append(boundary_left)  # Fishing game
 fishing_game.obj_list.append(boundary_right)
