@@ -18,6 +18,7 @@ playground_floor = resource.image('bg.png')
 dark_effect = resource.image('effect.png')
 bed_img = resource.image('bed.png')
 wall_img = resource.image('wall.png')
+wall2_img = resource.image('wall2.png')
 bass_body = resource.image('bass.png')
 bass_neck = resource.image('bass_neck.png')
 bass_outline = resource.image('bass_outline.png')
@@ -156,6 +157,7 @@ center_image(info)
 
 center_image(credits_back)
 center_image(fish)
+wall2_spr = sprite.Sprite(wall2_img)
 
 SPLASH = "splash"
 MENU = "menu"
@@ -403,7 +405,7 @@ class Player():
                             height=40)
         obj_hit = self.detect_collision(new_hitbox)
 
-        if engine.current_screen == bedroom:
+        if engine.current_screen in [bedroom, hall_upper]:
             if obj_hit is not None:
                 self.vx = 0
                 self.vy = 0
@@ -1167,6 +1169,8 @@ class Bedroom(Screen):
             player.x = 560
             player.y = 70
 
+        wall.visible = True
+
         # ~~~~~~~~~~~~~~
 
     def is_key_pressed(self):
@@ -1188,6 +1192,10 @@ class HallUpper(Screen):
     def draw(self):
         self.bg.draw()
 
+        for obj in self.obj_list:
+            if obj.sprite is not None and obj.visible:
+                obj.sprite.draw()
+
         player.draw()
 
     def on_click(self, x, y, button):
@@ -1201,6 +1209,8 @@ class HallUpper(Screen):
             engine.set_next_screen(bedroom)
             player.x = 70
             player.y = 70
+
+        wall.visible = False
 
     def is_key_pressed(self):
         for _k, v in keys.items():
@@ -1445,8 +1455,8 @@ bed = SceneObject(id=1, solid=True, name="bed", x=80, y=240,
 boundary_down = SceneObject(id=2, solid=True, name="b_bottom", x=320, y=0,
                             width=SCREENW, height=1)
 
-boundary_left = SceneObject(id=3, solid=True, name="b_left", x=0, y=0, width=1,
-                            height=SCREENH)
+boundary_left = SceneObject(id=3, solid=True, name="b_left", x=0, y=0,
+                            width=1, height=SCREENH, visible=True)
 
 boundary_right = SceneObject(id=4, solid=True, name="b_right", x=639, y=0,
                              width=1, height=SCREENH)
@@ -1510,6 +1520,11 @@ bedroom.obj_list.append(outline_trash)
 bedroom.obj_list.append(trash)
 bedroom.obj_list.append(outline_desktop)
 bedroom.obj_list.append(desktop)
+
+hall_upper.obj_list.append(boundary_down)  # Hall
+hall_upper.obj_list.append(boundary_left)
+hall_upper.obj_list.append(boundary_right)
+hall_upper.obj_list.append(wall)
 
 fishing_game.obj_list.append(boundary_left)  # Fishing game
 fishing_game.obj_list.append(boundary_right)
