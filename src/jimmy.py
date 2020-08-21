@@ -28,6 +28,7 @@ trash_outline = resource.image('trash_outline.png')
 desk = resource.image('desk.png')
 desk_outline = resource.image('desk_outline.png')
 fish_disc = resource.image('fish_disc.png')
+ship_disc = resource.image('ship_disc.png')
 game_bag = resource.image('game_bag.png')
 message_show = resource.image('message_show.png')
 close_window = resource.image('close_window.png')
@@ -147,6 +148,7 @@ center_image(trash_outline)
 center_image(desk)
 center_image(desk_outline)
 center_image(fish_disc)
+center_image(ship_disc)
 center_image(popup_button_U)
 center_image(popup_button_S)
 center_image(close_window)
@@ -595,6 +597,7 @@ class Hud:
     popup_se = sprite.Sprite(popup_button_S, x=320, y=100)
     close_pop = sprite.Sprite(close_window, x=581, y=108)
     disc1 = sprite.Sprite(fish_disc, x=140, y=275)
+    disc2 = sprite.Sprite(ship_disc, x=300, y=275)
 
     def __init__(self):
         self.mouse_over_button = False
@@ -613,6 +616,10 @@ class Hud:
 
         self.disc1_region = Region(x=self.disc1.x - self.disc1.width // 2,
                                    y=self.disc1.y - self.disc1.height // 2,
+                                   width=128, height=128)
+
+        self.disc2_region = Region(x=self.disc2.x - self.disc2.width // 2,
+                                   y=self.disc2.y - self.disc2.height // 2,
                                    width=128, height=128)
 
     def update(self, dt):
@@ -644,6 +651,13 @@ class Hud:
            not self.from_bag and \
            len(player.games) > 0 and \
            self.disc1_region.contain(engine.mouse_X, engine.mouse_Y):
+            window.set_mouse_cursor(choose_cur)
+
+        if engine.layer == MSG and \
+           player.is_over_desktop and \
+           not self.from_bag and \
+           len(player.games) > 0 and \
+           self.disc2_region.contain(engine.mouse_X, engine.mouse_Y):
             window.set_mouse_cursor(choose_cur)
 
         if engine.layer == MSG:
@@ -678,6 +692,10 @@ class Hud:
         if engine.showing_games and \
            "fish" in player.games:
             self.disc1.draw()
+
+        if engine.showing_games and \
+           "cliche" in player.games:
+            self.disc2.draw()
 
     def on_click(self, x, y, button):
         if engine.current_screen in [bedroom, hall_upper] and \
@@ -1065,6 +1083,7 @@ class Bedroom(Screen):
         if engine.layer == MSG:
 
             if engine.hud.popup_button_region.contain(x, y) and \
+               engine.current_screen == bedroom and \
                self.message == self.trash_text1:
                 engine.layer = GAME
                 player.games.append("fish")
@@ -1203,10 +1222,28 @@ class HallUpper(Screen):
         player.draw()
 
     def on_click(self, x, y, button):
-        print(engine.mouse_X, engine.mouse_Y)
+        if engine.layer == MSG:
+
+            if engine.hud.popup_button_region.contain(x, y) and \
+               engine.current_screen == hall_upper and \
+               bedroom.message == bedroom.trash_text1:
+                engine.layer = GAME
+                player.games.append("cliche")
 
     def on_key_press(self, symbol, modifiers):
-        pass
+        if player.is_over_trash2 and \
+           "cliche" not in player.games and \
+           symbol == key.SPACE:
+            select.play()
+            engine.layer = MSG
+            bedroom.message = bedroom.trash_text1
+
+        if player.is_over_trash2 and \
+           "cliche" in player.games and \
+           symbol == key.SPACE:
+            select.play()
+            engine.layer = MSG
+            bedroom.message = bedroom.trash_text2
 
     def update(self, dt):
         if player.hitbox.collides(self.go_bedroom):
