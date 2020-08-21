@@ -382,7 +382,8 @@ class Player():
 
         self.is_over_bass = False
         self.is_over_bed = False
-        self.is_over_trash = False
+        self.is_over_trash1 = False
+        self.is_over_trash2 = False
         self.is_over_desktop = False
         self.games = []
         self.game_selected = ""
@@ -1094,14 +1095,14 @@ class Bedroom(Screen):
                 player.x = 77
                 player.y = 256
 
-            if player.is_over_trash and symbol == key.SPACE \
+            if player.is_over_trash1 and symbol == key.SPACE \
                and "fish" not in player.games:
                 select.play()
                 engine.layer = MSG
                 self.message = self.trash_text1
                 engine.showing_games = False
 
-            if player.is_over_trash and symbol == key.SPACE \
+            if player.is_over_trash1 and symbol == key.SPACE \
                and "fish" in player.games:
                 select.play()
                 engine.layer = MSG
@@ -1150,12 +1151,12 @@ class Bedroom(Screen):
             outline_bed.visible = False
             player.is_over_bed = False
 
-        if player.hitbox.collides(outline_trash.hitbox):
-            outline_trash.visible = True
-            player.is_over_trash = True
+        if player.hitbox.collides(outline_trash1.hitbox):
+            outline_trash1.visible = True
+            player.is_over_trash1 = True
         else:
-            outline_trash.visible = False
-            player.is_over_trash = False
+            outline_trash1.visible = False
+            player.is_over_trash1 = False
 
         if player.hitbox.collides(outline_desktop.hitbox):
             outline_desktop.visible = True
@@ -1184,10 +1185,13 @@ class Bedroom(Screen):
 class HallUpper(Screen):
 
     bg = sprite.Sprite(hall1, x=0, y=0)
+    trash2 = sprite.Sprite(trash_can)
+    tr_outline2 = sprite.Sprite(trash_outline)
 
     def __init__(self):
         self.obj_list = []
         self.go_bedroom = Region(610, 20, 30, 100)
+        self.tr_outline = Region(575, 225, 80, 80)
 
     def draw(self):
         self.bg.draw()
@@ -1209,6 +1213,13 @@ class HallUpper(Screen):
             engine.set_next_screen(bedroom)
             player.x = 70
             player.y = 70
+
+        if player.hitbox.collides(outline_trash2.hitbox):
+            outline_trash2.visible = True
+            player.is_over_trash2 = True
+        else:
+            outline_trash2.visible = False
+            player.is_over_trash2 = False
 
         wall.visible = False
 
@@ -1471,12 +1482,12 @@ outline_bass = SceneObject(id=6, solid=False, name="bass_outline", x=260,
 outline_bed = SceneObject(id=7, solid=False, name="bed_outline", x=80, y=240,
                           sprite=Bedroom.bd_outline, visible=False)
 
-trash = SceneObject(id=8, solid=True, name="trash_can", x=580, y=50,
-                    sprite=Bedroom.trash)
+trash1 = SceneObject(id=8, solid=True, name="trash_can", x=580, y=50,
+                     sprite=Bedroom.trash)
 
-outline_trash = SceneObject(id=9, solid=False, name="trash_outline", x=580,
-                            y=50, width=80, height=80,
-                            sprite=Bedroom.tr_outline, visible=False)
+outline_trash1 = SceneObject(id=9, solid=False, name="trash_outline", x=580,
+                             y=50, width=80, height=80,
+                             sprite=Bedroom.tr_outline, visible=False)
 
 desktop = SceneObject(id=10, solid=True, name="desktop", x=480, y=255,
                       sprite=Bedroom.desk_spr)
@@ -1494,6 +1505,13 @@ circle1 = SceneObject(id=13, solid=True, name="circle1", x=220, y=185,
 circle2 = SceneObject(id=14, solid=True, name="circle2", x=430, y=178,
                       width=32, height=64)
 
+trash2 = SceneObject(id=15, solid=True, name="trash2", x=575,
+                     y=225, sprite=HallUpper.trash2)
+
+outline_trash2 = SceneObject(id=16, solid=False, name="trash_outline2",
+                             x=575, y=225, width=80, height=80,
+                             sprite=HallUpper.tr_outline2, visible=False)
+
 # Fishing game objects
 ...
 
@@ -1508,13 +1526,13 @@ fishing_game = FishingGame()
 # Add all the scene objects
 main_menu.obj_list.append(bed)  # Main menu
 main_menu.obj_list.append(body_bass)
-main_menu.obj_list.append(trash)
+main_menu.obj_list.append(trash1)
 main_menu.obj_list.append(desktop)
 
 credit_screen.obj_list.append(wall)  # Credit screen
 credit_screen.obj_list.append(bed)
 credit_screen.obj_list.append(body_bass)
-credit_screen.obj_list.append(trash)
+credit_screen.obj_list.append(trash1)
 credit_screen.obj_list.append(desktop)
 
 bedroom.obj_list.append(wall)  # Bedroom
@@ -1525,8 +1543,8 @@ bedroom.obj_list.append(boundary_left)
 bedroom.obj_list.append(boundary_right)
 bedroom.obj_list.append(outline_bass)
 bedroom.obj_list.append(body_bass)
-bedroom.obj_list.append(outline_trash)
-bedroom.obj_list.append(trash)
+bedroom.obj_list.append(outline_trash1)
+bedroom.obj_list.append(trash1)
 bedroom.obj_list.append(outline_desktop)
 bedroom.obj_list.append(desktop)
 
@@ -1537,6 +1555,8 @@ hall_upper.obj_list.append(wall)
 hall_upper.obj_list.append(stairs)
 hall_upper.obj_list.append(circle1)
 hall_upper.obj_list.append(circle2)
+hall_upper.obj_list.append(outline_trash2)
+hall_upper.obj_list.append(trash2)
 
 fishing_game.obj_list.append(boundary_left)  # Fishing game
 fishing_game.obj_list.append(boundary_right)
