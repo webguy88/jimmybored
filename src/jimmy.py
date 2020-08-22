@@ -169,7 +169,7 @@ wall2_spr = sprite.Sprite(wall2_img)
 
 VERSION = 2
 PATCH_LEVEL = 0
-EXTRAVERSION = "-snap1"
+
 SPLASH = "splash"
 MENU = "menu"
 GAME = "game"
@@ -663,12 +663,14 @@ class Hud:
            self.disc1_region.contain(engine.mouse_X, engine.mouse_Y):
             window.set_mouse_cursor(choose_cur)
 
+        '''
         if engine.layer == MSG and \
            player.is_over_desktop and \
            not self.from_bag and \
            len(player.games) > 0 and \
            self.disc2_region.contain(engine.mouse_X, engine.mouse_Y):
             window.set_mouse_cursor(choose_cur)
+        '''
 
         if engine.layer == MSG:
 
