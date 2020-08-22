@@ -168,6 +168,7 @@ SPLASH = "splash"
 MENU = "menu"
 GAME = "game"
 FISHING = "fishing"
+SPACE = "space"
 MSG = "message"
 
 # GL stuff
@@ -730,6 +731,15 @@ class Hud:
             engine.set_next_screen(fishing_game)
 
         if engine.layer == MSG and \
+           player.is_over_desktop and \
+           not self.from_bag and \
+           len(player.games) > 0 and \
+           self.disc2_region.contain(x, y):
+            engine.showing_games = False
+            engine.layer = SPACE
+            engine.set_next_screen(space_game)
+
+        if engine.layer == MSG and \
            self.popup_button_region.contain(x, y):
             self.from_bag = False
             engine.layer = GAME
@@ -1139,7 +1149,7 @@ class Bedroom(Screen):
                 engine.showing_games = False
 
             if player.is_over_desktop and symbol == key.SPACE \
-               and "fish" in player.games:
+               and "fish" and "cliche" in player.games:
                 select.play()
                 engine.layer = MSG
                 self.message = self.game_text2
@@ -1493,6 +1503,27 @@ enough time before catching!""",
             self.enemies.remove(self.enemies[0])
 
 
+class SpaceGame(Screen):
+
+    def __init__(self):
+        self.obj_list = []
+
+    def draw(self):
+        pass
+
+    def on_click(self, x, y, button):
+        pass
+
+    def on_key_press(self, symbol, modifiers):
+        pass
+
+    def update(self, dt):
+        pass
+
+    def enter(self):
+        pass
+
+
 # Instances of classes
 # Screens go first
 player = Player()
@@ -1568,6 +1599,7 @@ engine = Engine(splash_screen)
 bedroom = Bedroom()
 hall_upper = HallUpper()
 fishing_game = FishingGame()
+space_game = SpaceGame()
 
 # Add all the scene objects
 main_menu.obj_list.append(bed)  # Main menu
