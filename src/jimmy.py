@@ -1792,6 +1792,6 @@ keys = key.KeyStateHandler()
 window.push_handlers(keys)
 
 clock.schedule_interval(update, 1/30)
-clock.schedule_interval(stamina_drain, 120)
+clock.schedule_interval(stamina_drain, 60)
 
 pyglet.app.run()
