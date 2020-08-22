@@ -6,3 +6,4 @@ jimmy.spec
 __pycache__
 .vscode
 gitpush.sh
+file.json
