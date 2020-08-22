@@ -169,7 +169,7 @@ wall2_spr = sprite.Sprite(wall2_img)
 
 VERSION = 2
 PATCH_LEVEL = 0
-
+EXTRAVERSION = "-snap1"
 SPLASH = "splash"
 MENU = "menu"
 GAME = "game"
