@@ -7,6 +7,7 @@ from pyglet.gl import gl
 from pyglet import clock
 from pyglet import text
 from random import randint
+from saveload import GameState
 
 # Resource-related
 resource.path = ['../resources']
@@ -41,7 +42,8 @@ plant1 = resource.image('plant1.png')
 menu_screen = resource.image('main_menu.png')
 menu_dark = resource.image('menu_dark.png')
 logo = resource.image('logo.png')
-button_play = resource.image('button_play.png')
+newbutton = resource.image('newbutton.png')
+continuebutton = resource.image('continuebutton.png')
 info = resource.image('info.png')
 
 credits_back = resource.image('credits_back.png')
@@ -157,7 +159,8 @@ center_image(close_window)
 center_image(plant1)
 
 center_image(logo)
-center_image(button_play)
+center_image(newbutton)
+center_image(continuebutton)
 center_image(info)
 
 center_image(credits_back)
@@ -826,14 +829,20 @@ class MainMenu(Screen):
     menu = sprite.Sprite(menu_screen, x=0, y=0)
     dark = sprite.Sprite(menu_dark, x=0, y=0)
     logo_spr = sprite.Sprite(logo, x=320, y=380)
-    button = sprite.Sprite(button_play, x=320, y=150)
+    n_button = sprite.Sprite(newbutton, x=220, y=150)
+    c_button = sprite.Sprite(continuebutton, x=420, y=150)
     info_button = sprite.Sprite(info, x=35, y=35)
 
     def __init__(self):
         self.obj_list = []
-        self.play_region = Region(self.button.x - self.button.width // 2,
-                                  self.button.y - self.button.height // 2,
-                                  234, 84)
+        self.new_region = Region(self.n_button.x - self.n_button.width // 2,
+                                 self.n_button.y - self.n_button.height // 2,
+                                 self.n_button.width, self.n_button.height)
+
+        self.continue_reg = Region(self.c_button.x - self.c_button.width // 2,
+                                   self.c_button.y - self.c_button.height // 2,
+                                   self.c_button.width, self.c_button.height)
+
         self.info_button_region = Region(self.info_button.x -
                                          self.info_button.width // 2,
                                          self.info_button.y -
@@ -862,17 +871,27 @@ class MainMenu(Screen):
 
         self.dark.draw()
         self.logo_spr.draw()
-        self.button.draw()
+        self.n_button.draw()
+        self.c_button.draw()
         self.info_button.draw()
         self.version_text.draw()
         self.copyrights.draw()
         main_music.play()
 
     def on_click(self, x, y, button):
-        if self.play_region.contain(x, y):
+        gs = GameState()
+
+        if self.new_region.contain(x, y):
             engine.layer = GAME
             engine.set_next_screen(bedroom)
             engine.began = True
+            gs.save(player)
+
+        if self.continue_reg.contain(x, y) and gs.state_exists():
+            engine.layer = GAME
+            engine.set_next_screen(bedroom)
+            engine.began = True
+            gs.load(player)
 
         if self.info_button_region.contain(x, y):
             engine.set_next_screen(credit_screen)
@@ -881,7 +900,10 @@ class MainMenu(Screen):
         pass
 
     def update(self, dt):
-        if self.play_region.contain(engine.mouse_X, engine.mouse_Y):
+        if self.new_region.contain(engine.mouse_X, engine.mouse_Y):
+            window.set_mouse_cursor(choose_cur)
+
+        if self.continue_reg.contain(engine.mouse_X, engine.mouse_Y):
             window.set_mouse_cursor(choose_cur)
 
         if self.info_button_region.contain(engine.mouse_X, engine.mouse_Y):
@@ -1239,7 +1261,6 @@ class HallUpper(Screen):
         player.draw()
 
     def on_click(self, x, y, button):
-        print(engine.mouse_X, engine.mouse_Y)
         if engine.layer == MSG:
 
             if engine.hud.popup_button_region.contain(x, y) and \
@@ -1788,10 +1809,17 @@ def stamina_drain(dt):
         player.stamina_drain(dt)
 
 
+def savestate(dt):
+    if engine.began:
+        gs = GameState()
+        gs.save(player)
+
+
 keys = key.KeyStateHandler()
 window.push_handlers(keys)
 
 clock.schedule_interval(update, 1/30)
 clock.schedule_interval(stamina_drain, 60)
+clock.schedule_interval(savestate, 2)
 
 pyglet.app.run()
