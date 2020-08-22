@@ -36,6 +36,7 @@ popup_button_U = resource.image('popup_button_U.png')
 popup_button_S = resource.image('popup_button_S.png')
 
 hall1 = resource.image('up_hall.png')
+plant1 = resource.image('plant1.png')
 
 menu_screen = resource.image('main_menu.png')
 menu_dark = resource.image('menu_dark.png')
@@ -152,6 +153,8 @@ center_image(ship_disc)
 center_image(popup_button_U)
 center_image(popup_button_S)
 center_image(close_window)
+
+center_image(plant1)
 
 center_image(logo)
 center_image(button_play)
@@ -1206,6 +1209,7 @@ class HallUpper(Screen):
     bg = sprite.Sprite(hall1, x=0, y=0)
     trash2 = sprite.Sprite(trash_can)
     tr_outline2 = sprite.Sprite(trash_outline)
+    plant1_spr = sprite.Sprite(plant1)
 
     def __init__(self):
         self.obj_list = []
@@ -1222,6 +1226,7 @@ class HallUpper(Screen):
         player.draw()
 
     def on_click(self, x, y, button):
+        print(engine.mouse_X, engine.mouse_Y)
         if engine.layer == MSG:
 
             if engine.hud.popup_button_region.contain(x, y) and \
@@ -1549,6 +1554,10 @@ outline_trash2 = SceneObject(id=16, solid=False, name="trash_outline2",
                              x=575, y=225, width=80, height=80,
                              sprite=HallUpper.tr_outline2, visible=False)
 
+plant_hall = SceneObject(id=17, solid=True, name="plant_hall",
+                         x=115, y=245, width=48, height=48,
+                         sprite=HallUpper.plant1_spr)
+
 # Fishing game objects
 ...
 
@@ -1594,6 +1603,7 @@ hall_upper.obj_list.append(circle1)
 hall_upper.obj_list.append(circle2)
 hall_upper.obj_list.append(outline_trash2)
 hall_upper.obj_list.append(trash2)
+hall_upper.obj_list.append(plant_hall)
 
 fishing_game.obj_list.append(boundary_left)  # Fishing game
 fishing_game.obj_list.append(boundary_right)
