@@ -169,7 +169,7 @@ center_image(fish)
 wall2_spr = sprite.Sprite(wall2_img)
 
 VERSION = 2
-PATCH_LEVEL = 0
+PATCH_LEVEL = 1
 EXTRAVERSION = "-snap1"
 SPLASH = "splash"
 MENU = "menu"
@@ -857,7 +857,7 @@ class MainMenu(Screen):
                                          self.info_button.height // 2,
                                          64, 64)
 
-        self.version_text = text.Label("v 2.0-snap1", x=577, y=40,
+        self.version_text = text.Label("v 2.1-snap1", x=577, y=40,
                                        anchor_x='center', anchor_y='center',
                                        font_size=16,
                                        color=(255, 255, 255, 255),
