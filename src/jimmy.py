@@ -1844,17 +1844,14 @@ def update(dt):
             player.walking = False
 
 
-@window.event
 def fish_timer(dt):
     fishing_game.fish_timer(dt)
 
 
-@window.event
 def fish_spawner(dt):
     fishing_game.fish_spawner(dt)
 
 
-@window.event
 def sleep(dt):
     if player.is_sleeping:
         engine.enter()
@@ -1864,7 +1861,6 @@ def sleep(dt):
         player.y = 148
 
 
-@window.event
 def stamina_drain(dt):
     if engine.layer == GAME and \
        engine.began and \
