@@ -50,6 +50,7 @@ credits_back = resource.image('credits_back.png')
 pageL = resource.image('pageL.png')
 pageR = resource.image('pageR.png')
 controls_screen = resource.image('controls_screen.png')
+controls_screen2 = resource.image('controls_screen2.png')
 
 fisher_menu = resource.image('fisher_menu.png')
 fisher_background = resource.image('fisher_background.png')
@@ -947,6 +948,7 @@ class Credit(Screen):
     page_left = sprite.Sprite(pageL, x=240, y=5)
     page_right = sprite.Sprite(pageR, x=310, y=5)
     controls = sprite.Sprite(controls_screen, x=0, y=0)
+    controls2 = sprite.Sprite(controls_screen2, x=0, y=0)
 
     def __init__(self):
         self.obj_list = []
@@ -1021,6 +1023,11 @@ class Credit(Screen):
         elif self.page == 2:
             self.controls.draw()
             self.page_left.draw()
+            self.page_right.draw()
+
+        elif self.page == 3:
+            self.controls2.draw()
+            self.page_left.draw()
 
         self.go_back.draw()
 
@@ -1031,8 +1038,14 @@ class Credit(Screen):
         if self.go_left_region.contain(x, y) and self.page == 2:
             self.page = 1
 
+        if self.go_left_region.contain(x, y) and self.page == 3:
+            self.page = 2
+
         elif self.go_right_region.contain(x, y) and self.page == 1:
             self.page = 2
+
+        elif self.go_right_region.contain(x, y) and self.page == 2:
+            self.page = 3
 
     def on_key_press(self, symbol, modifiers):
         pass
@@ -1042,11 +1055,19 @@ class Credit(Screen):
             window.set_mouse_cursor(choose_cur)
 
         if self.go_left_region.contain(engine.mouse_X, engine.mouse_Y) and \
+           self.page == 3:
+            window.set_mouse_cursor(choose_cur)
+
+        if self.go_left_region.contain(engine.mouse_X, engine.mouse_Y) and \
            self.page == 2:
             window.set_mouse_cursor(choose_cur)
 
         if self.go_right_region.contain(engine.mouse_X, engine.mouse_Y) and \
            self.page == 1:
+            window.set_mouse_cursor(choose_cur)
+
+        if self.go_right_region.contain(engine.mouse_X, engine.mouse_Y) and \
+           self.page == 2:
             window.set_mouse_cursor(choose_cur)
 
 
