@@ -663,14 +663,14 @@ class Hud:
            self.disc1_region.contain(engine.mouse_X, engine.mouse_Y):
             window.set_mouse_cursor(choose_cur)
 
-        '''
+        
         if engine.layer == MSG and \
            player.is_over_desktop and \
            not self.from_bag and \
            len(player.games) > 0 and \
            self.disc2_region.contain(engine.mouse_X, engine.mouse_Y):
             window.set_mouse_cursor(choose_cur)
-        '''
+
 
         if engine.layer == MSG:
 
@@ -1532,6 +1532,7 @@ enough time before catching!""",
 class SpaceGame(Screen):
 
     def __init__(self):
+        self.game_started = False
         self.obj_list = []
 
     def draw(self):
@@ -1541,13 +1542,25 @@ class SpaceGame(Screen):
         pass
 
     def on_key_press(self, symbol, modifiers):
-        pass
+        if symbol == key.BACKSPACE and \
+           not self.game_started:
+            engine.set_next_screen(bedroom)
+            player.x = 320
+            player.y = 148
+            engine.layer = GAME
 
     def update(self, dt):
         pass
 
     def enter(self):
         pass
+
+    def is_key_pressed(self):
+        for _k, v in keys.items():
+            if v:
+                return True
+
+        return False
 
 
 # Instances of classes
