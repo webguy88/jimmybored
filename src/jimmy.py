@@ -664,7 +664,7 @@ class Hud:
         if engine.layer == MSG and \
            player.is_over_desktop and \
            not self.from_bag and \
-           len(player.games) > 0 and \
+           "fish" in player.games and \
            self.disc1_region.contain(engine.mouse_X, engine.mouse_Y):
             window.set_mouse_cursor(choose_cur)
 
@@ -672,7 +672,7 @@ class Hud:
         if engine.layer == MSG and \
            player.is_over_desktop and \
            not self.from_bag and \
-           len(player.games) > 0 and \
+           "cliche" in player.games and \
            self.disc2_region.contain(engine.mouse_X, engine.mouse_Y):
             window.set_mouse_cursor(choose_cur)
 
@@ -737,7 +737,7 @@ class Hud:
         if engine.layer == MSG and \
            player.is_over_desktop and \
            not self.from_bag and \
-           len(player.games) > 0 and \
+           "fish" in player.games and \
            self.disc1_region.contain(x, y):
             engine.showing_games = False
             engine.layer = FISHING
@@ -746,7 +746,7 @@ class Hud:
         if engine.layer == MSG and \
            player.is_over_desktop and \
            not self.from_bag and \
-           len(player.games) > 0 and \
+           "cliche" in player.games and \
            self.disc2_region.contain(x, y):
             engine.showing_games = False
             engine.layer = SPACE
