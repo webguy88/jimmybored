@@ -593,6 +593,11 @@ class Engine():
         self.opacity = 0
         self.on_exit = False
 
+    def clear(self):
+        player.x = 320
+        player.y = 148
+        player.games.clear()
+
 
 class Hud:
     stamina_display = None
@@ -887,6 +892,7 @@ class MainMenu(Screen):
             engine.layer = GAME
             engine.set_next_screen(bedroom)
             engine.began = True
+            engine.clear()
             gs.save(player)
 
         if self.continue_reg.contain(x, y) and gs.state_exists():
@@ -899,7 +905,20 @@ class MainMenu(Screen):
             engine.set_next_screen(credit_screen)
 
     def on_key_press(self, symbol, modifiers):
-        pass
+        gs = GameState()
+
+        if symbol == key.N:
+            engine.layer = GAME
+            engine.set_next_screen(bedroom)
+            engine.began = True
+            engine.clear()
+            gs.save(player)
+
+        if symbol == key.C:
+            engine.layer = GAME
+            engine.set_next_screen(bedroom)
+            engine.began = True
+            gs.load(player)
 
     def update(self, dt):
         if self.new_region.contain(engine.mouse_X, engine.mouse_Y):
