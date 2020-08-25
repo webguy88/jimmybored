@@ -1195,7 +1195,15 @@ class Bedroom(Screen):
                 engine.showing_games = False
 
             if player.is_over_desktop and symbol == key.SPACE \
-               and "fish" and "cliche" in player.games:
+               and "fish" in player.games:
+                select.play()
+                engine.layer = MSG
+                self.message = self.game_text2
+                engine.showing_games = True
+
+
+            if player.is_over_desktop and symbol == key.SPACE \
+               and "cliche" in player.games:
                 select.play()
                 engine.layer = MSG
                 self.message = self.game_text2
