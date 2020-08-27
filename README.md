@@ -11,6 +11,7 @@ How can I do that? Well... the controls are simple.
 - Move him around with the WASD keys
 - If you see a popup appear, you can close it with the cross button or by pressing the "Sounds cool!" button
 - You interact with objects by pressing SPACE. Each object has a different behavior and response. In order to interact with these objects, you have to make sure there's a highlight around them.
+- Make sure to watch out for your stamina meter. When it reaches to one bar, your speed will decrease. Make sure you go to sleep so you recharge your energy!
 
 You may find secrets, you may not.
 
