@@ -60,6 +60,12 @@ fisher_won = resource.image('fisher_won.png')
 fisher_lost = resource.image('fisher_lost.png')
 tv_effect = resource.image('tv_effect.png')
 
+ship = resource.image('ship.png')
+explosion1 = resource.image('explosion1.png')
+explosion2 = resource.image('explosion2.png')
+explosion3 = resource.image('explosion3.png')
+explosion4 = resource.image('explosion4.png')
+
 stamina_meter = resource.image('stamina_meter.png')
 stamina0 = resource.image('stamina0.png')
 stamina1 = resource.image('stamina1.png')
@@ -166,6 +172,9 @@ center_image(info)
 
 center_image(credits_back)
 center_image(fish)
+
+center_image(ship)
+
 wall2_spr = sprite.Sprite(wall2_img)
 
 VERSION = 2
@@ -390,6 +399,7 @@ class Player():
         self.jimmy_walk_l = sprite.Sprite(self.jimmy_left)
         self.fisherman = sprite.Sprite(self.fisher_sprite)
         self.fisherman_grab = sprite.Sprite(self.fisher_grab)
+        self.ship_spr = sprite.Sprite(ship)
         self.sprite = self.jimmy_walk_r
         self.hitbox = Region(self.x, self.y, 40, 70)
 
@@ -436,6 +446,14 @@ class Player():
                 self.sprite.y = self.y
                 return
 
+        elif engine.current_screen == space_game:
+            if obj_hit is not None:
+                self.vy = 0
+                self.sprite = self.ship_spr
+                self.sprite.x = self.x
+                self.sprite.y = self.y
+                return
+
         # Calculate Jimmy sprite
         if engine.current_screen in [bedroom, hall_upper]:
             if not self.walking:
@@ -452,12 +470,24 @@ class Player():
                 self.y = 236
                 self.sprite = self.jimmy_walk_r
 
+            new_hitbox = Region(new_x - 40 // 2,
+                                new_y - 70 // 2,
+                                width=40,
+                                height=40)
+
         if engine.current_screen == fishing_game:
             if not fishing_game.caught_something:
                 self.sprite = self.fisherman
             else:
                 self.sprite = self.fisherman_grab
-
+        
+        if engine.current_screen == space_game:
+            self.sprite = self.ship_spr
+            new_hitbox = Region(new_x - 90 // 2,
+                                new_y - 130 // 2,
+                                width=90,
+                                height=140)
+            
         self.x = new_x
         self.y = new_y  # It's physics time :P
         self.sprite.x = self.x
@@ -1430,6 +1460,7 @@ enough time before catching!""",
             fish_music.play()
             player.draw()
 
+
         if self.game_finished and not self.won:
             self.lose_display.draw()
 
@@ -1584,7 +1615,13 @@ class SpaceGame(Screen):
         self.obj_list = []
 
     def draw(self):
-        pass
+        if self.game_started:
+            player.draw()
+
+        for obj in self.obj_list:
+            if obj.sprite is not None and obj.visible:
+                obj.sprite.draw()
+
 
     def on_click(self, x, y, button):
         pass
@@ -1597,8 +1634,20 @@ class SpaceGame(Screen):
             player.y = 148
             engine.layer = GAME
 
+        if symbol == key.ENTER and \
+           not self.game_started:
+            player.x = 120
+            player.y = 240
+            self.game_started = True
+
     def update(self, dt):
-        pass
+        if keys[key.W] and \
+           player.vy < 300:
+            player.vy += 25
+
+        if keys[key.S] and \
+           player.vy > -300:
+            player.vy -= 25
 
     def enter(self):
         pass
@@ -1676,6 +1725,10 @@ plant_hall = SceneObject(id=17, solid=True, name="plant_hall",
                          x=115, y=245, width=48, height=48,
                          sprite=HallUpper.plant1_spr)
 
+boundary_up = SceneObject(id=18, solid=True, name="boundary_up",
+                          x=0, y=480, width=SCREENW, height=1,
+                          visible=False)
+
 # Fishing game objects
 ...
 
@@ -1726,6 +1779,9 @@ hall_upper.obj_list.append(plant_hall)
 
 fishing_game.obj_list.append(boundary_left)  # Fishing game
 fishing_game.obj_list.append(boundary_right)
+
+space_game.obj_list.append(boundary_down)
+space_game.obj_list.append(boundary_up)
 
 target_width, target_height = target_resolution
 viewport = FixedResolution(window,
